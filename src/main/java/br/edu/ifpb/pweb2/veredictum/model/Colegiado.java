@@ -6,7 +6,7 @@ import java.util.List;
 class Colegiado {
     private Long id;
     private String nome;
-    private List<Professor> professores = new ArrayList<>();
+    private List<Usuario> professores = new ArrayList<>();
 
 
     public Long getId() { return id; }
@@ -17,6 +17,6 @@ class Colegiado {
     public void setNome(String nome) { this.nome = nome; }
 
 
-    public List<Professor> getProfessores() { return professores; }
-    public void setProfessores(List<Professor> professores) { this.professores = professores; }
+    public List<Usuario> getProfessores() { return professores; }
+    public void setProfessores(List<Usuario> professores) { this.professores = professores; }
 }

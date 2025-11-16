@@ -1,6 +1,7 @@
 package br.edu.ifpb.pweb2.veredictum.model;
 
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 class Reuniao {

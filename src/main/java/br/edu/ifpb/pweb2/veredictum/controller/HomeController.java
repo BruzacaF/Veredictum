@@ -1,39 +1,25 @@
 package br.edu.ifpb.pweb2.veredictum.controller;
 
-import br.edu.ifpb.pweb2.veredictum.model.Processo;
-import br.edu.ifpb.pweb2.veredictum.service.ProcessoService;
+import br.edu.ifpb.pweb2.veredictum.security.UsuarioDetails;
+import br.edu.ifpb.pweb2.veredictum.service.UsuarioService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-
-import java.util.List;
 
 @Controller
-@RequestMapping("/")
+
 public class HomeController {
+    @Autowired
+    private UsuarioService usuarioService;
 
-
-    private final ProcessoService processoService;
-
-    public HomeController(ProcessoService processoService) {
-        this.processoService = processoService;
+    @GetMapping("/home")
+    public String home(Model model, @AuthenticationPrincipal UsuarioDetails usuarioDetails) {
+        model.addAttribute("usuario", usuarioDetails.getUsuario());
+        return "home";
     }
 
-    @GetMapping
-    public String home(){
-        return "homePage";
-    }
 
-    @GetMapping("/aluno/dashboard")
-    public String alunoDashboard(Model model){
-        Aluno aluno = alunoService.getAlunoLogado();
-        List<Processo> processos = processoService.buscarPorAluno(aluno.getId());
-        model.addAttribute("processos", processos);
-        model.addAttribute("aluno", aluno);
-        model.addAttribute("processos", new Processo());
-
-        return "/aluno/dashboard";
-    }
 
 }
