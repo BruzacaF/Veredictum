@@ -1,8 +1,13 @@
 package br.edu.ifpb.pweb2.veredictum.service;
 
+import br.edu.ifpb.pweb2.veredictum.model.Processo;
 import org.springframework.stereotype.Service;
 
 @Service
-class ProcessoService {
+public class ProcessoService {
+
+    public void adicionarProcesso(Processo processo) {
+
+    }
 
 }
