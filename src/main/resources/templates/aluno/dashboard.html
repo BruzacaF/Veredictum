@@ -11,131 +11,44 @@
 <body class="bg-light">
 
 <!-- Header Fragment -->
-<div th:replace="~{layout/header :: header}"></div>
+<div th:replace="~{layout/header :: header(usuario=${usuario})}"></div>
 
 <div class="container py-4">
+    <div th:replace="~{fragments/form-processo :: form-processo(usuario=${usuario}, assuntos=${assuntos}, processoDTO=${processo})}"></div>
 
-    <h2 class="mb-4">Gerenciar Processos</h2>
-    <!-- Sucesso -->
-    <div th:if="${success}" id="flash-message-success" class="alert alert-success">
-        <span th:text="${success}"></span>
-    </div>
-
-    <!-- Erro -->
-    <div th:if="${error}" id="flash-message-error" class="alert alert-danger">
-        <span th:text="${error}"></span>
-    </div>
-
-
-    <!-- Formulário de criação -->
-    <div class="card shadow-sm mb-4">
-        <div class="card-body">
-            <h5>Cadastrar Novo Processo</h5>
-
-            <form th:action="@{/processo/adicionar}" method="post" th:object="${processo}">
-                <div class="mb-3">
-                    <label class="form-label">Assunto</label>
-                    <select class="form-select" th:field="*{assunto}" required>
-                        <option value="" disabled selected>Selecione um assunto</option>
-
-                        <!-- LISTA DE ASSUNTOS DO BANCO -->
-                        <option th:each="assunto : ${assuntos}"
-                                th:value="${assunto.id}"
-                                th:text="${assunto.descricao}">
-                        </option>
-                    </select>
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label">Texto do Requerimento</label>
-                    <textarea class="form-control" th:field="*{textoRequerimento}" rows="4" name="textoRequerimento" ></textarea>
-                </div>
-
-                <button type="submit" class="btn btn-primary">Enviar Processo</button>
-            </form>
+    <form id="form-filtros" class="row g-3 mb-3">
+        <div class="col-md-4">
+            <label class="form-label">Buscar por Assunto</label>
+            <select class="form-select" id="filtroAssunto" name="assunto">
+                <option value="">Todos</option>
+                <option th:each="assunto : ${assuntos}" th:value="${assunto.descricao}" th:text="${assunto.descricao}"></option>
+            </select>
         </div>
-    </div>
 
-    <!-- Tabela de processos -->
-    <div class="card shadow-sm">
-        <div class="card-body">
-            <h5>Meus Processos</h5>
-
-            <!-- Filtros -->
-            <form th:action="@{/processo/listar}" method="get" class="row g-3 mb-3">
-                <div class="col-md-4">
-                    <label class="form-label">Buscar por Assunto</label>
-                    <select class="form-select" name="assunto" th:value="${param.assunto}">
-                        <option value="" disabled selected>Selecione um assunto</option>
-                        <option th:each="assunto : ${assuntos}"
-                        th:value="${assunto.id}"
-                        th:text="${assunto.descricao}"
-                        th:selected="${#strings.equals(param.assunto, null)}">
-                        </option>
-                    </select>
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label">Filtrar por Status</label>
-                    <select class="form-select" name="status" th:value="${param.status}">
-                        <option value="" disabled selected>Selecione um status</option>
-                        <option th:each="status : ${listaStatus}"
-                                th:value="${status}"
-                                th:text="${status}"
-                                th:selected="${param.status == st.name()}">
-                        </option>
-                    </select>
-                </div>
-
-                <div class="col-md-3">
-                    <label class="form-label">Ordenar por Data</label>
-                    <select class="form-select" name="ordenacao" th:value="${param.ordenacao}">
-                        <option value="ASC">Mais Antigos</option>
-                        <option value="DESC">Mais Recentes</option>
-                    </select>
-                </div>
-
-                <div class="col-md-2 d-flex align-items-end">
-                    <button type="submit" class="btn btn-secondary w-100">Filtrar</button>
-                </div>
-            </form>
-
-            <!-- Feedback -->
-            <div th:if="${processos.size() > 0}" class="alert alert-info">
-                🔍 <span th:text="${processos.size()}"></span> processos encontrados.
-            </div>
-            <div th:if="${processos.size() == 0}" class="alert alert-warning">
-                📂 Nenhum processo encontrado com este filtro.
-            </div>
-
-            <table class="table table-striped">
-                <thead>
-                <tr>
-                    <th>Número</th>
-                    <th>Assunto</th>
-                    <th>Status</th>
-                    <th>Data de Criação</th>
-                    <th>Ações</th>
-                </tr>
-                </thead>
-
-                <tbody>
-                <tr th:each="proc : ${processos}">
-                    <td th:text="${proc.numeroProcesso}">Número</td>
-                    <td th:text="${proc.assunto.descricao}">Assunto</td>
-                    <td th:text="${proc.status}">Status</td>
-                    <td th:text="${#temporals.format(proc.dataCriacao, 'dd/MM/yyyy')}">Data</td>
-                    <td>
-                        <a th:href="@{/processo/detalhes/{id}(id=${proc.id})}" class="btn btn-sm btn-outline-primary">
-                            Detalhes
-                        </a>
-                    </td>
-                </tr>
-                </tbody>
-            </table>
+        <div class="col-md-3">
+            <label class="form-label">Filtrar por Status</label>
+            <select class="form-select" id="filtroStatus" name="status">
+                <option value="">Todos</option>
+                <option th:each="st : ${status}" th:value="${st}" th:text="${st}"></option>
+            </select>
         </div>
-    </div>
 
+        <div class="col-md-3">
+            <label class="form-label">Ordenar por Data</label>
+            <select class="form-select" id="filtroOrdenacao" name="ordenacao">
+                <option value="ASC">Mais Antigos</option>
+                <option value="DESC" selected>Mais Recentes</option>
+            </select>
+        </div>
+
+        <div class="col-md-2 d-flex align-items-end">
+            <button id="btnFiltrar" class="btn btn-secondary w-100" type="button">Filtrar</button>
+        </div>
+    </form>
+    <!-- Componente Tabela -->
+    <div id="tabela-container">
+        <div th:replace="~{fragments/tabela-processo :: tabela-processo(processos=${processos}, status=${status}, assuntos=${assuntos})}"></div>
+    </div>
 
 </div>
 
@@ -151,6 +64,39 @@
         if (msg) msg.style.display = "none";
         if (err) err.style.display = "none";
     }, 3000);
+
+    async function carregarTabelaComFiltros(paramsObject) {
+        const params = new URLSearchParams(paramsObject).toString();
+        try {
+            const resp = await fetch('/processo/listar?' + params, {
+                method: 'GET',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (!resp.ok) {
+                console.error('Resposta não OK:', resp.status, await resp.text());
+                return;
+            }
+
+            const html = await resp.text();
+            document.getElementById('tabela-container').innerHTML = html;
+        } catch (err) {
+            console.error('Erro ao carregar tabela via AJAX:', err);
+        }
+    }
+
+    // quando o botão for clicado, coleta filtros e chama AJAX
+    document.getElementById('btnFiltrar').addEventListener('click', function() {
+        const assunto = document.getElementById('filtroAssunto').value || '';
+        const status = document.getElementById('filtroStatus').value || '';
+        const ordenacao = document.getElementById('filtroOrdenacao').value || 'DESC';
+
+        carregarTabelaComFiltros({ assunto, status, ordenacao });
+    });
+
+
 </script>
 
 </body>

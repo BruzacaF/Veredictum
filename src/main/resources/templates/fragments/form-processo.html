@@ -1,0 +1,46 @@
+
+<!doctype html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="form-processo">
+    <h2 class="mb-4">Gerenciar Processos</h2>
+    <!-- Sucesso -->
+    <div th:if="${success}" id="flash-message-success" class="alert alert-success">
+        <span th:text="${success}"></span>
+    </div>
+
+    <!-- Erro -->
+    <div th:if="${error}" id="flash-message-error" class="alert alert-danger">
+        <span th:text="${error}"></span>
+    </div>
+    <!-- Formulário de criação -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-body">
+            <h5>Cadastrar Novo Processo</h5>
+
+            <form th:action="@{/processo/adicionar}" method="post" th:object="${processoDTO}">
+                <div class="mb-3">
+                    <label class="form-label">Assunto</label>
+                    <select class="form-select" th:field="*{assunto}" required>
+                        <option value="" disabled selected>Selecione um assunto</option>
+
+                        <!-- LISTA DE ASSUNTOS DO BANCO -->
+                        <option th:each="assunto : ${assuntos}"
+                                th:value="${assunto.id}"
+                                th:text="${assunto.descricao}">
+                        </option>
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Texto do Requerimento</label>
+                    <textarea class="form-control" th:field="*{textoRequerimento}" rows="4" name="textoRequerimento" ></textarea>
+                </div>
+
+                <button type="submit" class="btn btn-primary">Enviar Processo</button>
+            </form>
+        </div>
+    </div>
+</div>
+</body>
+</html>

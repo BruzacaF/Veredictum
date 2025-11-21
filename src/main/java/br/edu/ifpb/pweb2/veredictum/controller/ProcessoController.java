@@ -59,7 +59,8 @@ class ProcessoController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false, defaultValue = "DESC" )String ordencao,
             Model model,
-            @AuthenticationPrincipal UsuarioDetails usuarioDetails
+            @AuthenticationPrincipal UsuarioDetails usuarioDetails,
+            @RequestHeader(value = "X-requested-Width", required = false) String requestedWidth
     ) {
 
         Map<String, Object> params = new HashMap<>();
@@ -77,14 +78,19 @@ class ProcessoController {
 
         List<Processo> processos = processoRepository.filtrar(filtro, alunoId);
         model.addAttribute("assuntos", assuntoRepository.findAll());
+        model.addAttribute("usuario", usuario);
+
         model.addAttribute("processos", processos);
-        model.addAttribute("aluno", usuario);
-        model.addAttribute("status", StatusProcessoEnum.values());
+        model.addAttribute("listaStatus", StatusProcessoEnum.values());
         model.addAttribute(
                 "param", params
         );
 
-        return "/aluno/dashboard";
+        if ("XMLHttpRequest".equalsIgnoreCase(requestedWidth)) {
+            return "fragments/tabela-processo :: tabela-processo" ;
+
+        }
+        return "fragments/tabela-processo :: tabela-processo";
     }
 
 
