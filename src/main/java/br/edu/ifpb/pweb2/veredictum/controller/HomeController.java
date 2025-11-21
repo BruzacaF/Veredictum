@@ -1,6 +1,7 @@
 package br.edu.ifpb.pweb2.veredictum.controller;
 
-import br.edu.ifpb.pweb2.veredictum.model.Processo;
+import br.edu.ifpb.pweb2.veredictum.dto.ProcessoDTO;
+import br.edu.ifpb.pweb2.veredictum.enums.StatusProcessoEnum;
 import br.edu.ifpb.pweb2.veredictum.repository.AssuntoRepository;
 import br.edu.ifpb.pweb2.veredictum.security.UsuarioDetails;
 import br.edu.ifpb.pweb2.veredictum.service.ProcessoService;
@@ -22,9 +23,10 @@ public class HomeController {
     public String home(Model model, @AuthenticationPrincipal UsuarioDetails usuarioDetails) {
         model.addAttribute("aluno", usuarioDetails.getUsuario());
         model.addAttribute("processos", processoService.buscarPorAluno(usuarioDetails.getUsuario()));
-        model.addAttribute("processo", new Processo());
+        model.addAttribute("processo", new ProcessoDTO());
         model.addAttribute("assuntos", assuntoRepository.findAll());
-        return "/aluno/dashboard";
+        model.addAttribute("status", StatusProcessoEnum.values());
+        return "aluno/dashboard";
     }
 
 

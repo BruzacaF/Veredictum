@@ -1,6 +1,7 @@
 package br.edu.ifpb.pweb2.veredictum.config;
 
 import br.edu.ifpb.pweb2.veredictum.enums.RoleEnum;
+import br.edu.ifpb.pweb2.veredictum.enums.StatusProcessoEnum;
 import br.edu.ifpb.pweb2.veredictum.model.Assunto;
 import br.edu.ifpb.pweb2.veredictum.model.Processo;
 import br.edu.ifpb.pweb2.veredictum.model.Usuario;
@@ -11,6 +12,8 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+
+import java.time.LocalDate;
 
 @Configuration
 public class DataInitializer {
@@ -74,27 +77,18 @@ public class DataInitializer {
             assuntoRepository.save(a2);
             assuntoRepository.save(a3);
 
-            // ---------------------------
-            // Criar Processos (do aluno)
-            // ---------------------------
             Processo p1 = new Processo();
+            p1.setDataCriacao(LocalDate.now());
+            p1.setStatus(StatusProcessoEnum.EM_ANALISE);
             p1.setAluno(aluno);
+            p1.setNumeroProcesso("22222222");
             p1.setAssunto(a1);
-            p1.setTextoRequerimento("Gostaria de solicitar revisão da prova 2.");
+            p1.setTextoRequerimento("aaaaaa");
 
-            Processo p2 = new Processo();
-            p2.setAluno(aluno);
-            p2.setAssunto(a2);
-            p2.setTextoRequerimento("Solicito trancamento da disciplina Programação Web.");
-
-            Processo p3 = new Processo();
-            p3.setAluno(aluno);
-            p3.setAssunto(a3);
-            p3.setTextoRequerimento("Problemas na contagem de faltas.");
 
             processoRepository.save(p1);
-            processoRepository.save(p2);
-            processoRepository.save(p3);
+
+
 
             System.out.println("✔ Dados iniciais criados com sucesso!");
         };

@@ -1,15 +1,14 @@
 package br.edu.ifpb.pweb2.veredictum.model;
 
 import jakarta.persistence.*;
-import lombok.Getter;
+import lombok.Data;
 import lombok.Setter;
 
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 @Entity
-@Getter
-@Setter
+@Data
 public class Reuniao {
 
     @Id

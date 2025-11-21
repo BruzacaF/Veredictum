@@ -1,12 +1,15 @@
 package br.edu.ifpb.pweb2.veredictum.model;
 
+import br.edu.ifpb.pweb2.veredictum.enums.StatusProcessoEnum;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+
+import java.time.LocalDate;
 
 @Entity
-@Getter
-@Setter
+@Data
 public class Processo {
 
     @Id
@@ -17,18 +20,25 @@ public class Processo {
     @JoinColumn(name = "assunto_id")
     private Assunto assunto;
 
+    @NotBlank
     private String textoRequerimento;
 
     @ManyToOne
     @JoinColumn(name = "aluno_id")
     private Usuario aluno;
 
+    @NotNull
+    private LocalDate dataCriacao;
+
+    @NotNull
+    private String numeroProcesso;
+
     @ManyToOne
     @JoinColumn(name = "reuniao_id")
     private Reuniao reuniao; // reunião onde será julgado
 
-
-    ;
+    @Enumerated(EnumType.STRING)
+    private StatusProcessoEnum status;
 
 
 }
