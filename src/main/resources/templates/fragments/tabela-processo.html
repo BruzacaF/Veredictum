@@ -1,0 +1,45 @@
+<div th:fragment="tabela-processo(processos, status, assuntos)">
+
+    <div class="card shadow-sm">
+        <div class="card-body">
+            <h5>Meus Processos</h5>
+
+            <!-- FEEDBACK -->
+            <div th:if="${processos.size() > 0}" class="alert alert-info">
+                🔍 <span th:text="${processos.size()}"></span> processos encontrados.
+            </div>
+            <div th:if="${processos.size() == 0}" class="alert alert-warning">
+                📂 Nenhum processo encontrado com este filtro.
+            </div>
+
+            <!-- TABELA -->
+            <table class="table table-striped">
+                <thead>
+                <tr>
+                    <th>Número</th>
+                    <th>Assunto</th>
+                    <th>Status</th>
+                    <th>Data de Criação</th>
+                    <th>Ações</th>
+                </tr>
+                </thead>
+
+                <tbody>
+                <tr th:each="proc : ${processos}">
+                    <td th:text="${proc.numeroProcesso}">Número</td>
+                    <td th:text="${proc.assunto.descricao}">Assunto</td>
+                    <td th:text="${proc.status}">Status</td>
+                    <td th:text="${#temporals.format(proc.dataCriacao, 'dd/MM/yyyy')}">Data</td>
+                    <td>
+                        <a th:href="@{/processo/detalhes/{id}(id=${proc.id})}" class="btn btn-sm btn-outline-primary">
+                            Detalhes
+                        </a>
+                    </td>
+                </tr>
+                </tbody>
+            </table>
+
+        </div>
+    </div>
+
+</div>
