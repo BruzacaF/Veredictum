@@ -17,6 +17,8 @@ public class ProcessoService {
     ProcessoRepository processoRepository;
     @Autowired
     private UsuarioService usuarioService;
+    @Autowired
+    private ProcessoService processoService;
 
     public Processo criar(ProcessoDTO processoDTO, Usuario aluno) {
 
@@ -44,6 +46,10 @@ public class ProcessoService {
 
     public List<Processo> buscarPorAluno(Usuario aluno) {
         return processoRepository.findByAluno(aluno);
+    }
+
+    public List<Processo> buscarPorProfessorRelator (Usuario professor) {
+        return processoRepository.findByProfessor(professor);
     }
 
 

@@ -1,6 +1,7 @@
 package br.edu.ifpb.pweb2.veredictum.criteria;
 
 import br.edu.ifpb.pweb2.veredictum.dto.ProcessoDTOFiltro;
+import br.edu.ifpb.pweb2.veredictum.enums.RoleEnum;
 import br.edu.ifpb.pweb2.veredictum.enums.StatusProcessoEnum;
 import br.edu.ifpb.pweb2.veredictum.model.Processo;
 import jakarta.persistence.EntityManager;
@@ -24,7 +25,7 @@ public class ProcessoRepositoryImpl implements ProcessoRepositoryCustom{
     private EntityManager em;
 
     @Override
-    public List<Processo> filtrar (ProcessoDTOFiltro filtro, Long alunoId) {
+    public List<Processo> filtrar (ProcessoDTOFiltro filtro, Long usuarioId, RoleEnum role) {
 
         CriteriaBuilder builder = em.getCriteriaBuilder();
         CriteriaQuery<Processo> criteria = builder.createQuery(Processo.class);
@@ -33,8 +34,11 @@ public class ProcessoRepositoryImpl implements ProcessoRepositoryCustom{
         List<Predicate> predicates = new ArrayList<>();
 
         //Fitlro 1 - Aluno logado
-        if (alunoId != null) {
-            predicates.add(builder.equal(root.get("aluno").get("id"), alunoId));
+        if (usuarioId != null && role == RoleEnum.ALUNO) {
+            predicates.add(builder.equal(root.get("aluno").get("id"), usuarioId));
+        } else if (usuarioId != null && role == RoleEnum.PROFESSOR) {
+            predicates.add(builder.equal(root.get("professor").get("id"), usuarioId));
+
         }
 
         //Filtro 2 - Assunto
