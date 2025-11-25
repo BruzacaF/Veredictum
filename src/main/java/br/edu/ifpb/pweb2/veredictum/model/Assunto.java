@@ -7,20 +7,13 @@ import jakarta.persistence.Id;
 import lombok.Getter;
 import lombok.Setter;
 
-import java.util.ArrayList;
-import java.util.List;
 @Entity
-class Colegiado {
-    @Setter
-    @Getter
+@Getter
+@Setter
+public class Assunto {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Getter
-    @Setter
-    private String nome;
-    @Getter
-    @Setter
-    private List<Usuario> professores = new ArrayList<>();
 
+    private String descricao;
 }

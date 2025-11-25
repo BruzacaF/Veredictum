@@ -2,6 +2,8 @@ package br.edu.ifpb.pweb2.veredictum.model;
 
 import br.edu.ifpb.pweb2.veredictum.enums.RoleEnum;
 import jakarta.persistence.*;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
@@ -10,34 +12,31 @@ import java.util.List;
 
 @Entity
 public class Usuario implements UserDetails {
+    @Setter
+    @Getter
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     protected Long id;
+
+    @Getter
+    @Setter
     protected String nome;
+
+    @Getter
+    @Setter
     protected String email;
+    @Setter
+    @Getter
     protected String senha;
+
+    @Getter
+    @Setter
     @Enumerated(EnumType.STRING)
     protected RoleEnum role;
 
+    @OneToMany(mappedBy = "aluno")
+    private List<Processo> processos;
 
-
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
-
-
-    public String getNome() { return nome; }
-    public void setNome(String nome) { this.nome = nome; }
-
-
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
-
-
-    public String getSenha() { return senha; }
-    public void setSenha(String senha) { this.senha = senha; }
-
-    public RoleEnum getRole() { return role; }
-    public void setRole(RoleEnum role) { this.role = role; }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

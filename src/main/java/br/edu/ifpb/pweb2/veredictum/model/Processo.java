@@ -1,29 +1,44 @@
 package br.edu.ifpb.pweb2.veredictum.model;
 
+import br.edu.ifpb.pweb2.veredictum.enums.StatusProcessoEnum;
+import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import lombok.Data;
+
+import java.time.LocalDate;
+
+@Entity
+@Data
 public class Processo {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    private String assunto;
+
+    @ManyToOne
+    @JoinColumn(name = "assunto_id")
+    private Assunto assunto;
+
+    @NotBlank
     private String textoRequerimento;
+
+    @ManyToOne
+    @JoinColumn(name = "aluno_id")
     private Usuario aluno;
+
+    @NotNull
+    private LocalDate dataCriacao;
+
+    @NotNull
+    private String numeroProcesso;
+
+    @ManyToOne
+    @JoinColumn(name = "reuniao_id")
     private Reuniao reuniao; // reunião onde será julgado
 
-
-    public Long getId() { return id; }
-    public String getAssunto() { return assunto; }
-    public String getTextoRequerimento() { return textoRequerimento; }
-    public Usuario getAluno() { return aluno; }
-    public Reuniao getReuniao() { return reuniao; }
-
-    public void setId(Long id) { this.id = id; }
-    public void setAssunto(String assunto) { this.assunto = assunto; }
-    public String setTextoRequerimento(String textoRequerimento) {
-
-        return this.textoRequerimento = textoRequerimento;
-    };
-    public void setAluno(Usuario aluno) { this.aluno = aluno; }
-    public Reuniao setReuniao(Reuniao reuniao) {
-        return reuniao;
-    }
+    @Enumerated(EnumType.STRING)
+    private StatusProcessoEnum status;
 
 
 }
