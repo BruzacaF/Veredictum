@@ -2,6 +2,7 @@ package br.edu.ifpb.pweb2.veredictum.controller;
 
 import br.edu.ifpb.pweb2.veredictum.dto.ProcessoDTO;
 import br.edu.ifpb.pweb2.veredictum.dto.ProcessoDTOFiltro;
+import br.edu.ifpb.pweb2.veredictum.enums.RoleEnum;
 import br.edu.ifpb.pweb2.veredictum.enums.StatusProcessoEnum;
 import br.edu.ifpb.pweb2.veredictum.model.Processo;
 import br.edu.ifpb.pweb2.veredictum.model.Usuario;
@@ -74,9 +75,10 @@ class ProcessoController {
         filtro.setOrdenacao(ordencao);
 
         Usuario usuario = usuarioDetails.getUsuario();
-        Long alunoId = usuarioDetails.getUsuario().getId();
+        Long usuarioId = usuarioDetails.getUsuario().getId();
+        RoleEnum role = usuario.getRole();
 
-        List<Processo> processos = processoRepository.filtrar(filtro, alunoId);
+        List<Processo> processos = processoRepository.filtrar(filtro, usuarioId, role);
         model.addAttribute("assuntos", assuntoRepository.findAll());
         model.addAttribute("usuario", usuario);
 
@@ -93,6 +95,17 @@ class ProcessoController {
         return "fragments/tabela-processo :: tabela-processo";
     }
 
+
+    @GetMapping("/professor/listarRelator")
+    public String listarRelator(
+            @AuthenticationPrincipal UsuarioDetails usuarioDetails
+    ) {
+
+        processoService.buscarPorProfessorRelator(usuarioDetails.getUsuario());
+
+        return "redirect:/home";
+
+    }
 
 
 

@@ -11,4 +11,6 @@ public interface ProcessoRepository extends JpaRepository<Processo, Long>, Proce
 
     List<Processo> findByAluno(Usuario aluno);
 
+    List<Processo> findByProfessor(Usuario professor);
+
 }
