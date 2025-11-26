@@ -37,6 +37,9 @@ public class Usuario implements UserDetails {
     @OneToMany(mappedBy = "aluno")
     private List<Processo> processos;
 
+    @OneToMany(mappedBy = "professor")
+    private List<Processo> processosProfessor;
+
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {

@@ -27,6 +27,10 @@ public class Processo {
     @JoinColumn(name = "aluno_id")
     private Usuario aluno;
 
+    @ManyToOne
+    @JoinColumn(name = "professor_id")
+    private Usuario professor;
+
     @NotNull
     private LocalDate dataCriacao;
 

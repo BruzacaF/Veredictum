@@ -17,8 +17,6 @@ public class ProcessoService {
     ProcessoRepository processoRepository;
     @Autowired
     private UsuarioService usuarioService;
-    @Autowired
-    private ProcessoService processoService;
 
     public Processo criar(ProcessoDTO processoDTO, Usuario aluno) {
 
