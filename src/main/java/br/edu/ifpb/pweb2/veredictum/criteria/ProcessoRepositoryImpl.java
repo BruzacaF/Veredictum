@@ -45,7 +45,7 @@ public class ProcessoRepositoryImpl implements ProcessoRepositoryCustom{
         if(filtro.getAssunto() != null && !filtro.getAssunto().isEmpty()){
             predicates.add(
                     builder.like(
-                            builder.lower(root.get("assunto").get("descricao")),
+                            builder.lower(root.get("assunto").get("nome")),
                             builder.literal("%" + filtro.getAssunto().toLowerCase() + "%")
                     )
             );
