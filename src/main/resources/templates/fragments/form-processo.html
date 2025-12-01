@@ -27,7 +27,7 @@
                         <!-- LISTA DE ASSUNTOS DO BANCO -->
                         <option th:each="assunto : ${assuntos}"
                                 th:value="${assunto.id}"
-                                th:text="${assunto.descricao}">
+                                th:text="${assunto.nome}">
                         </option>
                     </select>
                 </div>

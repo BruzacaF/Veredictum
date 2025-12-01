@@ -20,9 +20,4 @@ public class HomeController {
 
         return "aluno/dashboard";
     }
-
-
-
-
-
 }

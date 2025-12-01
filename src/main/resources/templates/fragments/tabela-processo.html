@@ -26,8 +26,8 @@
 
                 <tbody>
                 <tr th:each="proc : ${processos}">
-                    <td th:text="${proc.numeroProcesso}">Número</td>
-                    <td th:text="${proc.assunto.descricao}">Assunto</td>
+                    <td th:text="${proc.numero}">Número</td>
+                    <td th:text="${proc.assunto.nome}">Assunto</td>
                     <td th:text="${proc.status}">Status</td>
                     <td th:text="${#temporals.format(proc.dataCriacao, 'dd/MM/yyyy')}">Data</td>
                     <td>

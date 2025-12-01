@@ -21,7 +21,7 @@
             <label class="form-label">Buscar por Assunto</label>
             <select class="form-select" id="filtroAssunto" name="assunto">
                 <option value="">Todos</option>
-                <option th:each="assunto : ${assuntos}" th:value="${assunto.descricao}" th:text="${assunto.descricao}"></option>
+                <option th:each="assunto : ${assuntos}" th:value="${assunto.nome}" th:text="${assunto.nome}"></option>
             </select>
         </div>
 

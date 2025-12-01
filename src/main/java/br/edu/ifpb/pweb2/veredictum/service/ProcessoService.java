@@ -2,8 +2,9 @@ package br.edu.ifpb.pweb2.veredictum.service;
 
 import br.edu.ifpb.pweb2.veredictum.dto.ProcessoDTO;
 import br.edu.ifpb.pweb2.veredictum.enums.StatusProcessoEnum;
+import br.edu.ifpb.pweb2.veredictum.model.Aluno;
 import br.edu.ifpb.pweb2.veredictum.model.Processo;
-import br.edu.ifpb.pweb2.veredictum.model.Usuario;
+import br.edu.ifpb.pweb2.veredictum.model.Professor;
 import br.edu.ifpb.pweb2.veredictum.repository.ProcessoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -17,10 +18,8 @@ public class ProcessoService {
     ProcessoRepository processoRepository;
     @Autowired
     private UsuarioService usuarioService;
-    @Autowired
-    private ProcessoService processoService;
 
-    public Processo criar(ProcessoDTO processoDTO, Usuario aluno) {
+    public Processo criar(ProcessoDTO processoDTO, Aluno aluno) {
 
 
 
@@ -30,11 +29,11 @@ public class ProcessoService {
             processo.setTextoRequerimento(processoDTO.getTextoRequerimento());
 
             processo.setAluno(aluno);
-            processo.setStatus(StatusProcessoEnum.EM_ANALISE);
+            processo.setStatus(StatusProcessoEnum.CRIADO);
             processo.setDataCriacao(LocalDate.now());
             String ano = String.valueOf(LocalDate.now().getYear());
             Long sequencial = processoRepository.count() + 1;
-            processo.setNumeroProcesso(ano + "-" + String.format("%03d", sequencial));
+            processo.setNumero(ano + "-" + String.format("%03d", sequencial));
 
             return  processoRepository.save(processo);
 
@@ -44,12 +43,12 @@ public class ProcessoService {
 
     }
 
-    public List<Processo> buscarPorAluno(Usuario aluno) {
+    public List<Processo> buscarPorAluno(Aluno aluno) {
         return processoRepository.findByAluno(aluno);
     }
 
-    public List<Processo> buscarPorProfessorRelator (Usuario professor) {
-        return processoRepository.findByProfessor(professor);
+    public List<Processo> buscarPorProfessorRelator(Professor professor) {
+        return processoRepository.findByRelator(professor);
     }
 
 
