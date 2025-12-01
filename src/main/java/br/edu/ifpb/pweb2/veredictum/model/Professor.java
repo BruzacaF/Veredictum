@@ -10,13 +10,14 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+@EqualsAndHashCode(callSuper = true)
 @Entity
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Professor extends Usuario {
     private String matricula;
-    private boolean coordenador;
+    private boolean ehCoordenador;
 
     @ManyToMany(mappedBy = "membros")
     private Set<Colegiado> colegiados = new HashSet<>();

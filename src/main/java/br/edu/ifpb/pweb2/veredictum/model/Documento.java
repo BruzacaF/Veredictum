@@ -21,7 +21,6 @@ public class Documento {
     private Long tamanho;
     
     @Lob
-    @Column(columnDefinition = "LONGBLOB")
     private byte[] conteudo;
     
     private LocalDateTime dataUpload;

@@ -40,7 +40,7 @@ public class Processo {
     private Professor relator;
 
     @ManyToOne
-    private Aluno interessado;
+    private Aluno aluno;
 
     @ManyToOne
     private Assunto assunto;

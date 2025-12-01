@@ -4,7 +4,9 @@ import br.edu.ifpb.pweb2.veredictum.dto.ProcessoDTO;
 import br.edu.ifpb.pweb2.veredictum.dto.ProcessoDTOFiltro;
 import br.edu.ifpb.pweb2.veredictum.enums.RoleEnum;
 import br.edu.ifpb.pweb2.veredictum.enums.StatusProcessoEnum;
+import br.edu.ifpb.pweb2.veredictum.model.Aluno;
 import br.edu.ifpb.pweb2.veredictum.model.Processo;
+import br.edu.ifpb.pweb2.veredictum.model.Professor;
 import br.edu.ifpb.pweb2.veredictum.model.Usuario;
 import br.edu.ifpb.pweb2.veredictum.repository.AssuntoRepository;
 import br.edu.ifpb.pweb2.veredictum.repository.ProcessoRepository;
@@ -25,7 +27,7 @@ import java.util.Map;
 
 @Controller
 @RequestMapping("/processo")
-class ProcessoController {
+public class ProcessoController {
 
     @Autowired
     ProcessoService processoService;
@@ -45,8 +47,8 @@ class ProcessoController {
         }
 
             try {
-                Processo processoCriado = processoService.criar(processo, usuarioDetails.getUsuario());
-                redirectAttributes.addFlashAttribute("success", "Processo número "+ processoCriado.getNumeroProcesso() + " adicionado com sucesso e está em" + processoCriado.getStatus());
+                Processo processoCriado = processoService.criar(processo, (Aluno) usuarioDetails.getUsuario());
+                redirectAttributes.addFlashAttribute("success", "Processo número "+ processoCriado.getNumero() + " adicionado com sucesso e está em" + processoCriado.getStatus());
 
             } catch (Exception e) {
                 redirectAttributes.addFlashAttribute("error", e.getMessage());
@@ -61,7 +63,7 @@ class ProcessoController {
             @RequestParam(required = false, defaultValue = "DESC" )String ordencao,
             Model model,
             @AuthenticationPrincipal UsuarioDetails usuarioDetails,
-            @RequestHeader(value = "X-requested-Width", required = false) String requestedWidth
+            @RequestHeader(value = "X-Requested-With", required = false) String requestedWith
     ) {
 
         Map<String, Object> params = new HashMap<>();
@@ -88,11 +90,10 @@ class ProcessoController {
                 "param", params
         );
 
-        if ("XMLHttpRequest".equalsIgnoreCase(requestedWidth)) {
-            return "fragments/tabela-processo :: tabela-processo" ;
-
+        if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
+            return "fragments/tabela-processo :: tabela-processo";
         }
-        return "fragments/tabela-processo :: tabela-processo";
+        return "processo/listar";
     }
 
 
@@ -101,7 +102,7 @@ class ProcessoController {
             @AuthenticationPrincipal UsuarioDetails usuarioDetails
     ) {
 
-        processoService.buscarPorProfessorRelator(usuarioDetails.getUsuario());
+        processoService.buscarPorProfessorRelator((Professor) usuarioDetails.getUsuario());
 
         return "redirect:/home";
 
