@@ -1,5 +1,6 @@
 package br.edu.ifpb.pweb2.veredictum.config;
 
+import br.edu.ifpb.pweb2.veredictum.security.CustomAuthenticationSuccessHandler;
 import br.edu.ifpb.pweb2.veredictum.service.UsuarioDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
@@ -19,6 +20,9 @@ public class SecurityConfig {
 
     @Autowired
     private UsuarioDetailsService usuarioDetailsService;
+
+    @Autowired
+    private CustomAuthenticationSuccessHandler successHandler;
 
     @Bean
     public PasswordEncoder passwordEncoder() {
@@ -44,12 +48,16 @@ public class SecurityConfig {
                 .authenticationProvider(authenticationProvider())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/", "/login", "/css/**", "/js/**").permitAll()
+                        .requestMatchers("/coordenador/**").hasRole("COORDENADOR")
+                        .requestMatchers("/professor/**").hasRole("PROFESSOR")
+                        .requestMatchers("/home/aluno/**").hasRole("ALUNO")
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .formLogin(form -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
-                        .defaultSuccessUrl("/home", true)
+                        .successHandler(successHandler)
                         .permitAll()
                 )
                 .logout(logout -> logout
