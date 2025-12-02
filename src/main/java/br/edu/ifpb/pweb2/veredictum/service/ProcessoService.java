@@ -7,6 +7,7 @@ import br.edu.ifpb.pweb2.veredictum.model.Aluno;
 import br.edu.ifpb.pweb2.veredictum.model.Processo;
 import br.edu.ifpb.pweb2.veredictum.model.Professor;
 import br.edu.ifpb.pweb2.veredictum.repository.ProcessoRepository;
+import br.edu.ifpb.pweb2.veredictum.repository.ProfessorRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
@@ -19,6 +20,8 @@ public class ProcessoService {
     ProcessoRepository processoRepository;
     @Autowired
     private UsuarioService usuarioService;
+    @Autowired
+    private ProfessorRepository professorRepository;
 
     public Processo criar(ProcessoDTO processoDTO, Aluno aluno) {
         try {
@@ -56,5 +59,23 @@ public class ProcessoService {
         filtro.setStatus(status.name());
         
         return processoRepository.filtrarPorColegiado(filtro, colegiadoId).size();
+    }
+
+    public Processo distribuirProcesso(Long processoId, Long professorId) {
+        Processo processo = processoRepository.findById(processoId)
+                .orElseThrow(() -> new RuntimeException("Processo não encontrado"));
+        
+        if (processo.getStatus() != StatusProcessoEnum.CRIADO) {
+            throw new RuntimeException("Processo não pode ser distribuído. Status atual: " + processo.getStatus());
+        }
+        
+        Professor professor = professorRepository.findById(professorId)
+                .orElseThrow(() -> new RuntimeException("Professor não encontrado"));
+        
+        processo.setRelator(professor);
+        processo.setStatus(StatusProcessoEnum.DISTRIBUIDO);
+        processo.setDataDistribuicao(LocalDate.now());
+        
+        return processoRepository.save(processo);
     }
 }
