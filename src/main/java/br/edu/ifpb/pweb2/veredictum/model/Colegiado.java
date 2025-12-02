@@ -10,11 +10,16 @@ import java.util.List;
 import java.util.Set;
 
 @Entity
-@Data
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
+@ToString(exclude = {"membros", "reunioes", "processos"})
+@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Colegiado {
-    @Id @GeneratedValue
+    @Id 
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @EqualsAndHashCode.Include
     private Long id;
 
     private LocalDate dataInicio;
@@ -22,10 +27,7 @@ public class Colegiado {
     private String descricao;
     private String portaria;
 
-    @ManyToMany
-    @JoinTable(name = "colegiado_professor",
-            joinColumns = @JoinColumn(name = "colegiado_id"),
-            inverseJoinColumns = @JoinColumn(name = "professor_id"))
+    @ManyToMany(mappedBy = "colegiados")
     private Set<Professor> membros = new HashSet<>();
 
     @OneToMany(mappedBy = "colegiado")
