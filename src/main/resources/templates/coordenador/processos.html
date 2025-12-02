@@ -199,9 +199,10 @@
                                    title="Ver detalhes">
                                     <i class="bi bi-eye"></i>
                                 </a>
-                                <a th:href="@{/processo/{id}/distribuir(id=${processo.id})}" 
-                                   class="btn btn-sm btn-outline-info"
+                                <a href="#" 
+                                   class="btn btn-sm btn-outline-info btn-distribuir"
                                    th:if="${processo.status.name() == 'CRIADO'}"
+                                   th:attr="data-processo-id=${processo.id},data-processo-numero=${processo.numero}"
                                    title="Distribuir processo">
                                     <i class="bi bi-person-plus"></i>
                                 </a>
@@ -210,6 +211,50 @@
                     </tbody>
                 </table>
             </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para Distribuir Processo -->
+<div class="modal fade" id="modalDistribuir" tabindex="-1" aria-labelledby="modalDistribuirLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="modalDistribuirLabel">
+                    <i class="bi bi-person-plus"></i> Designar Relator
+                </h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form id="formDistribuir" method="post">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                <div class="modal-body">
+                    <input type="hidden" id="processoId" name="processoId">
+                    
+                    <div class="mb-3">
+                        <label for="processoNumero" class="form-label">Processo</label>
+                        <input type="text" class="form-control" id="processoNumero" readonly>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="professorId" class="form-label">Professor Relator *</label>
+                        <select class="form-select" id="professorId" name="professorId" required>
+                            <option value="">Selecione um professor...</option>
+                            <option th:each="prof : ${professores}" 
+                                    th:value="${prof.id}" 
+                                    th:text="${prof.nome + ' - ' + prof.email}">
+                            </option>
+                        </select>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="bi bi-x-circle"></i> Cancelar
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-check-circle"></i> Designar Relator
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 </div>
@@ -225,6 +270,30 @@
             document.getElementById('formFiltro').submit();
         });
     });
+
+    // Event delegation para botões de distribuir
+    document.addEventListener('click', function(e) {
+        const btn = e.target.closest('.btn-distribuir');
+        if (btn) {
+            e.preventDefault();
+            const processoId = btn.dataset.processoId;
+            const processoNumero = btn.dataset.processoNumero;
+            abrirModalDistribuir(processoId, processoNumero);
+        }
+    });
+
+    // Função para abrir modal de distribuição
+    function abrirModalDistribuir(processoId, processoNumero) {
+        const form = document.getElementById('formDistribuir');
+        document.getElementById('processoId').value = processoId;
+        document.getElementById('processoNumero').value = processoNumero;
+        
+        // Define a action do formulário dinamicamente
+        form.action = '/processo/' + processoId + '/distribuir';
+        
+        const modal = new bootstrap.Modal(document.getElementById('modalDistribuir'));
+        modal.show();
+    }
 </script>
 </body>
 </html>

@@ -8,6 +8,7 @@ import br.edu.ifpb.pweb2.veredictum.repository.AssuntoRepository;
 import br.edu.ifpb.pweb2.veredictum.repository.UsuarioRepository;
 import br.edu.ifpb.pweb2.veredictum.security.UsuarioDetails;
 import br.edu.ifpb.pweb2.veredictum.service.ProcessoService;
+import br.edu.ifpb.pweb2.veredictum.service.ProfessorService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -26,12 +27,15 @@ public class CoordenadorController {
 
     @Autowired
     private ProcessoService processoService;
-    
+
     @Autowired
     private AssuntoRepository assuntoRepository;
     
     @Autowired
     private UsuarioRepository usuarioRepository;
+
+    @Autowired
+    private ProfessorService professorService;
 
     @GetMapping("/processos")
     @Transactional(readOnly = true)
@@ -79,6 +83,7 @@ public class CoordenadorController {
         model.addAttribute("assuntos", assuntoRepository.findAll());
         model.addAttribute("listaStatus", StatusProcessoEnum.values());
         model.addAttribute("usuario", coordenador);
+        model.addAttribute("professores", professorService.buscarPorColegiadoId(colegiadoId));
 
         if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
             return "fragments/tabela-processo :: tabela-processo";

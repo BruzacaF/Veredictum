@@ -108,7 +108,27 @@ public class ProcessoController {
 
     }
 
+    @PostMapping("/{id}/distribuir")
+    public String distribuirProcesso(
+            @PathVariable Long id,
+            @RequestParam Long professorId,
+            RedirectAttributes redirectAttributes,
+            @AuthenticationPrincipal UsuarioDetails usuarioDetails) {
 
+        try {
+            Processo processo = processoService.distribuirProcesso(id, professorId);
+
+            redirectAttributes.addFlashAttribute("success",
+                    String.format("Professor %s designado como relator do Processo nº %s.",
+                            processo.getRelator().getNome(),
+                            processo.getNumero()));
+
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        }
+
+        return "redirect:/coordenador/processos";
+    }
 
 }
 
