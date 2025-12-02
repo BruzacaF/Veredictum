@@ -31,10 +31,18 @@
         <div class="card-body">
             <h5 class="card-title">Funções disponíveis</h5>
             <ul>
-                <li th:if="${usuario.role.name() == 'ALUNO'}">Acessar dashboard do ALUNO</li>
-                <li th:if="${usuario.role.name() == 'PROFESSOR'}">Acessar dashboard do PROFESSOR</li>
-                <li th:if="${usuario.role.name() == 'COORDENADOR'}">Acessar dashboard do COORDENADOR</li>
-                <li th:if="${usuario.role.name() == 'ADMIN'}">Painel ADMIN</li>
+                <li th:if="${usuario.role.name() == 'ALUNO'}">
+                    <a th:href="@{/home/aluno}">Acessar dashboard do ALUNO</a>
+                </li>
+                <li th:if="${usuario.role.name() == 'PROFESSOR'}">
+                    <a th:href="@{/professor/dashboard}">Acessar dashboard do PROFESSOR</a>
+                </li>
+                <li th:if="${usuario.role.name() == 'COORDENADOR'}">
+                    <a th:href="@{/coordenador/processos}">Ver processos do Colegiado</a>
+                </li>
+                <li th:if="${usuario.role.name() == 'ADMIN'}">
+                    <a th:href="@{/admin/painel}">Painel ADMIN</a>
+                </li>
             </ul>
         </div>
     </div>
