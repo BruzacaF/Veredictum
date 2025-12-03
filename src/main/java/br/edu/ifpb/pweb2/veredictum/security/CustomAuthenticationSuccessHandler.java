@@ -36,7 +36,7 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
                 redirectUrl = "/coordenador/processos";
                 break;
             case ADMIN:
-                redirectUrl = "/admin/painel";
+                redirectUrl = "/admin";
                 break;
             default:
                 redirectUrl = "/home";

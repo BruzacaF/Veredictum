@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content(assuntos)">
+    <div class="d-flex justify-content-between align-items-start mb-4">
+        <div>
+            <h1 class="h3 fw-bold text-dark">Assuntos / Disciplinas</h1>
+            <p class="text-muted">Gestão da grade curricular</p>
+        </div>
+        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAssunto">
+            <i class="bi bi-plus-lg"></i> Nova Disciplina
+        </button>
+    </div>
+
+    <!-- Filtros e Busca -->
+    <div class="table-container mb-4">
+        <div class="p-3 border-bottom">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="position-relative">
+                        <i class="bi bi-search position-absolute top-50 start-0 translate-middle-y ms-3 text-muted"></i>
+                        <input type="text" class="form-control ps-5" placeholder="Buscar por nome..." id="buscarAssunto">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Grid de Cards -->
+        <div class="row row-cols-1 row-cols-md-2 row-cols-xl-3 g-4 p-4" id="gridAssuntos">
+            <div class="col assunto-card" th:each="assunto : ${assuntos}" th:data-nome="${assunto.nome}">
+                <div class="card h-100 border-0 shadow-sm">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-start mb-3">
+                            <div class="bg-warning bg-opacity-10 text-warning rounded d-flex align-items-center justify-content-center fw-bold" 
+                                 style="width: 48px; height: 48px;">
+                                <i class="bi bi-book"></i>
+                            </div>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-light" type="button" data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots-vertical"></i>
+                                </button>
+                                <ul class="dropdown-menu">
+                                    <li>
+                                        <button class="dropdown-item btn-editar" 
+                                                type="button"
+                                                th:data-id="${assunto.id}"
+                                                th:data-nome="${assunto.nome}">
+                                            <i class="bi bi-pencil"></i> Editar
+                                        </button>
+                                    </li>
+                                    <li>
+                                        <button class="dropdown-item text-danger btn-excluir" 
+                                                type="button"
+                                                th:data-id="${assunto.id}"
+                                                th:data-nome="${assunto.nome}">
+                                            <i class="bi bi-trash"></i> Excluir
+                                        </button>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                        <h5 class="card-title fw-bold mb-2" th:text="${assunto.nome}">Nome do Assunto</h5>
+                        <p class="text-muted small mb-3">
+                            <i class="bi bi-journals"></i> 
+                            <span th:text="${assunto.processos != null ? assunto.processos.size() : 0}">0</span> processos vinculados
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Card vazio quando não há assuntos -->
+            <div class="col-12" th:if="${assuntos == null || assuntos.isEmpty()}" id="emptyState">
+                <div class="text-center py-5">
+                    <i class="bi bi-inbox display-1 text-muted"></i>
+                    <p class="text-muted mt-3">Nenhum assunto cadastrado ainda.</p>
+                    <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#modalAssunto">
+                        Cadastrar Primeiro Assunto
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Criar/Editar -->
+    <div class="modal fade" id="modalAssunto" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="modalAssuntoLabel">Nova Disciplina</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form th:action="@{/admin/assunto}" method="post" id="formAssunto">
+                    <input type="hidden" name="id" id="assuntoId">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="nome" class="form-label fw-medium">Nome da Disciplina</label>
+                            <input type="text" class="form-control" id="nome" name="nome" 
+                                   placeholder="Ex: Cálculo I" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Confirmar Exclusão -->
+    <div class="modal fade" id="modalExcluir" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Exclusão</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <p>Tem certeza que deseja excluir o assunto <strong id="nomeExcluir"></strong>?</p>
+                    <p class="text-danger small">Esta ação não pode ser desfeita.</p>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <form th:action="@{/admin/assunto/delete}" method="post" style="display: inline;">
+                        <input type="hidden" name="id" id="idExcluir">
+                        <button type="submit" class="btn btn-danger">Excluir</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Event delegation para botões de editar
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.btn-editar')) {
+                const btn = e.target.closest('.btn-editar');
+                const id = btn.dataset.id;
+                const nome = btn.dataset.nome;
+                
+                document.getElementById('modalAssuntoLabel').textContent = 'Editar Disciplina';
+                document.getElementById('assuntoId').value = id;
+                document.getElementById('nome').value = nome;
+                document.getElementById('formAssunto').action = '/admin/assunto/update';
+                
+                new bootstrap.Modal(document.getElementById('modalAssunto')).show();
+            }
+            
+            if (e.target.closest('.btn-excluir')) {
+                const btn = e.target.closest('.btn-excluir');
+                const id = btn.dataset.id;
+                const nome = btn.dataset.nome;
+                
+                document.getElementById('nomeExcluir').textContent = nome;
+                document.getElementById('idExcluir').value = id;
+                
+                new bootstrap.Modal(document.getElementById('modalExcluir')).show();
+            }
+        });
+
+        // Resetar formulário ao fechar modal
+        document.getElementById('modalAssunto').addEventListener('hidden.bs.modal', function () {
+            document.getElementById('formAssunto').reset();
+            document.getElementById('assuntoId').value = '';
+            document.getElementById('formAssunto').action = '/admin/assunto';
+            document.getElementById('modalAssuntoLabel').textContent = 'Nova Disciplina';
+        });
+
+        // Busca/Filtro de assuntos
+        document.getElementById('buscarAssunto').addEventListener('input', function(e) {
+            const termo = e.target.value.toLowerCase();
+            const cards = document.querySelectorAll('.assunto-card');
+            
+            cards.forEach(function(card) {
+                const nome = card.dataset.nome.toLowerCase();
+                if (nome.includes(termo)) {
+                    card.style.display = '';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        });
+    </script>
+</div>
+</body>
+</html>
