@@ -18,6 +18,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -40,10 +41,15 @@ public class ProcessoController {
     public String adicionarProcesso(@Valid @ModelAttribute ProcessoDTO processo,
                                     BindingResult result,
                                     RedirectAttributes redirectAttributes,
-                                    @AuthenticationPrincipal UsuarioDetails usuarioDetails) {
+                                    @AuthenticationPrincipal UsuarioDetails usuarioDetails,
+                                    Model model) {
         if (result.hasErrors()) {
-            redirectAttributes.addFlashAttribute("error", "Preencha todos os campos necessarios");
-            return "redirect:/home";
+            for (FieldError error : result.getFieldErrors()){
+                System.out.println(error.getField() + ": " + error.getDefaultMessage());
+                redirectAttributes.addFlashAttribute("error_" + error.getField(), error.getDefaultMessage());
+            }
+            redirectAttributes.addFlashAttribute("processoDTO", processo);
+            return "redirect:/home/aluno";
         }
 
             try {
@@ -53,14 +59,14 @@ public class ProcessoController {
             } catch (Exception e) {
                 redirectAttributes.addFlashAttribute("error", e.getMessage());
             }
-            return "redirect:/home";
+            return "redirect:/home/aluno";
         };
 
     @GetMapping("/listar")
     public String listar(
             @RequestParam(required = false) String assunto,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false, defaultValue = "DESC" )String ordencao,
+            @RequestParam(required = false, defaultValue = "DESC" )String ordenacao,
             Model model,
             @AuthenticationPrincipal UsuarioDetails usuarioDetails,
             @RequestHeader(value = "X-Requested-With", required = false) String requestedWith
@@ -69,16 +75,18 @@ public class ProcessoController {
         Map<String, Object> params = new HashMap<>();
         params.put("assunto", assunto);
         params.put("status", status);
-        params.put("ordencao", ordencao);
+        params.put("ordencao", ordenacao);
 
         ProcessoDTOFiltro filtro = new ProcessoDTOFiltro();
         filtro.setAssunto(assunto);
         filtro.setStatus(status);
-        filtro.setOrdenacao(ordencao);
+        filtro.setOrdenacao(ordenacao);
 
         Usuario usuario = usuarioDetails.getUsuario();
         Long usuarioId = usuarioDetails.getUsuario().getId();
         RoleEnum role = usuario.getRole();
+
+        System.out.println(filtro.getOrdenacao());
 
         List<Processo> processos = processoRepository.filtrar(filtro, usuarioId, role);
         model.addAttribute("assuntos", assuntoRepository.findAll());

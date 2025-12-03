@@ -161,9 +161,11 @@
                         <p class="mb-0 text-muted" style="font-size: 0.75rem;">Administrador</p>
                     </div>
                 </div>
-                <a th:href="@{/logout}" class="btn btn-outline-danger btn-sm">
-                    <i class="bi bi-box-arrow-right"></i> Sair
-                </a>
+                <form th:action="@{/logout}" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                        <i class="bi bi-box-arrow-right"></i> Sair
+                    </button>
+                </form>
             </div>
         </div>
 
@@ -176,7 +178,7 @@
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="usuarios-tab" data-bs-toggle="tab" 
+                <button class="nav-link" id="usuarios-tab" data-bs-toggle="tab"
                         data-bs-target="#usuarios" type="button" role="tab">
                     <i class="bi bi-people"></i> Usuários
                 </button>
@@ -185,6 +187,12 @@
                 <button class="nav-link" id="assuntos-tab" data-bs-toggle="tab" 
                         data-bs-target="#assuntos" type="button" role="tab">
                     <i class="bi bi-book"></i> Assuntos
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="colegiados-tab" data-bs-toggle="tab"
+                        data-bs-target="#colegiados" type="button" role="tab">
+                    <i class="bi bi-people"></i> Colegiados
                 </button>
             </li>
         </ul>
@@ -244,6 +252,11 @@
         <div class="tab-pane fade" id="assuntos" role="tabpanel">
             <div th:replace="~{admin/fragments/assuntos :: content(assuntos=${assuntos})}"></div>
         </div>
+
+        <!-- Colegiados Tab -->
+        <div class="tab-pane fade" id="colegiados" role="tabpanel">
+            <div th:replace="~{admin/fragments/colegiados :: content(colegiados=${colegiados}, professores=${professores})}"></div>
+        </div>
     </div>
 </main>
 
@@ -298,7 +311,7 @@
                     document.getElementById('editTelefone').value = data.telefone || '';
                     document.getElementById('editRole').value = data.role || '';
                     toggleMatriculaField(document.getElementById('editRole'), 'editMatriculaContainer');
-                    
+
                     // Carregar matrícula
                     fetch('/admin/usuario/' + id + '/matricula')
                         .then(response => response.text())

@@ -5,9 +5,11 @@ import br.edu.ifpb.pweb2.veredictum.model.Professor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
 import java.util.List;
 
+@Repository
 public interface ProfessorRepository extends JpaRepository<Professor, Long> {
     Professor findByEmail(String email);
     Professor findByMatricula(String matricula);
@@ -21,4 +23,6 @@ public interface ProfessorRepository extends JpaRepository<Professor, Long> {
     List<Professor> findByColegiadoId(@Param("colegiadoId") Long colegiadoId);
 
     List<Professor> findByColegiadosContaining(Colegiado colegiado);
+
+    List<Professor> findAllByOrderByNomeAsc();
 }

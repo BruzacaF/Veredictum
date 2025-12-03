@@ -56,7 +56,7 @@ public class ProcessoRepositoryImpl implements ProcessoRepositoryCustom {
             predicates.add(builder.equal(root.get("colegiado").get("id"), colegiadoId));
         }
 
-        // ✅ Filtro por nome do Aluno (LIKE case-insensitive)
+        //  Filtro por nome do Aluno (LIKE case-insensitive)
         if (filtro.getNomeAluno() != null && !filtro.getNomeAluno().isBlank()) {
             predicates.add(
                 builder.like(
@@ -66,7 +66,7 @@ public class ProcessoRepositoryImpl implements ProcessoRepositoryCustom {
             );
         }
 
-        // ✅ Filtro por nome do Relator (LIKE case-insensitive)
+        // Filtro por nome do Relator (LIKE case-insensitive)
         if (filtro.getNomeRelator() != null && !filtro.getNomeRelator().isBlank()) {
             predicates.add(
                 builder.like(

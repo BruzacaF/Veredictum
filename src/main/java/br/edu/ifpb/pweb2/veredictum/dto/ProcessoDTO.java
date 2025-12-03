@@ -9,9 +9,9 @@ import lombok.Data;
 @Data
 public class ProcessoDTO {
 
-    @NotNull
+    @NotNull(message = "É obrigatório escolher um assunto")
     private Assunto assunto;
 
-    @NotBlank
+    @NotBlank(message = "O texto do requerimento não pode estar vazio")
     private String textoRequerimento;
 }

@@ -14,7 +14,7 @@
 <div th:replace="~{layout/header :: header(usuario=${usuario})}"></div>
 
 <div class="container py-4">
-    <div th:replace="~{fragments/form-processo :: form-processo(usuario=${usuario}, assuntos=${assuntos}, processoDTO=${processo})}"></div>
+    <div th:replace="~{fragments/form-processo :: form-processo(usuario=${usuario}, assuntos=${assuntos}, processoDTO=${processoDTO})}"></div>
 
     <form id="form-filtros" class="row g-3 mb-3">
         <div class="col-md-4">
@@ -34,7 +34,7 @@
         </div>
 
         <div class="col-md-3">
-            <label class="form-label">Ordenar por Data</label>
+            <label class="form-label" for="filtroOrdenacao">Ordenar por Data</label>
             <select class="form-select" id="filtroOrdenacao" name="ordenacao">
                 <option value="ASC">Mais Antigos</option>
                 <option value="DESC" selected>Mais Recentes</option>
@@ -91,9 +91,11 @@
     document.getElementById('btnFiltrar').addEventListener('click', function() {
         const assunto = document.getElementById('filtroAssunto').value || '';
         const status = document.getElementById('filtroStatus').value || '';
-        const ordenacao = document.getElementById('filtroOrdenacao').value || 'DESC';
+        const ordenacao = document.getElementById('filtroOrdenacao').value;
 
         carregarTabelaComFiltros({ assunto, status, ordenacao });
+
+        document.getElementById('filtroOrdenacao').value = ordenacao;
     });
 
 
