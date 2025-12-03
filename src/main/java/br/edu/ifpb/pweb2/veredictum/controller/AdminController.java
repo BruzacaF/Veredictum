@@ -229,8 +229,23 @@ public class AdminController {
         try {
             colegiadoService.excluir(id);
             redirectAttributes.addFlashAttribute("success", "Colegiado excluído com sucesso!");
+        } catch (DataIntegrityViolationException e) {
+            String errorMsg = "Não é possível excluir este colegiado pois ele está vinculado a ";
+            String detailMsg = e.getMessage().toLowerCase();
+            
+            if (detailMsg.contains("processo")) {
+                errorMsg += "um ou mais processos. Remova os processos relacionados primeiro.";
+            } else if (detailMsg.contains("parecer")) {
+                errorMsg += "um ou mais pareceres. Remova os pareceres relacionados primeiro.";
+            } else {
+                errorMsg += "outros registros no sistema. Remova as dependências primeiro.";
+            }
+            
+            redirectAttributes.addFlashAttribute("error", errorMsg);
+            e.printStackTrace();
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Erro ao excluir colegiado: " + e.getMessage());
+            e.printStackTrace();
         }
         return "redirect:/admin";
     }
