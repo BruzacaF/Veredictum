@@ -140,6 +140,12 @@
                     <i class="bi bi-book"></i> Assuntos
                 </button>
             </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="colegiados-tab" data-bs-toggle="tab" 
+                        data-bs-target="#colegiados" type="button" role="tab">
+                    <i class="bi bi-people"></i> Colegiados
+                </button>
+            </li>
         </ul>
     </div>
 </header>
@@ -170,19 +176,19 @@
                 <div class="col-md-3">
                     <div class="stat-card">
                         <h6 class="text-muted mb-2">Usuários Ativos</h6>
-                        <div class="stat-value text-success">0</div>
+                        <div class="stat-value text-success" th:text="${totalUsuarios != null ? totalUsuarios : 0}">0</div>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="stat-card">
                         <h6 class="text-muted mb-2">Processos Abertos</h6>
-                        <div class="stat-value text-warning">0</div>
+                        <div class="stat-value text-warning" th:text="${totalProcessos != null ? totalProcessos : 0}">0</div>
                     </div>
                 </div>
                 <div class="col-md-3">
                     <div class="stat-card">
                         <h6 class="text-muted mb-2">Colegiados</h6>
-                        <div class="stat-value text-info">0</div>
+                        <div class="stat-value text-info" th:text="${totalColegiados != null ? totalColegiados : 0}">0</div>
                     </div>
                 </div>
             </div>
@@ -191,6 +197,11 @@
         <!-- Assuntos Tab -->
         <div class="tab-pane fade" id="assuntos" role="tabpanel">
             <div th:replace="~{admin/fragments/assuntos :: content(assuntos=${assuntos})}"></div>
+        </div>
+
+        <!-- Colegiados Tab -->
+        <div class="tab-pane fade" id="colegiados" role="tabpanel">
+            <div th:replace="~{admin/fragments/colegiados :: content(colegiados=${colegiados}, professores=${professores})}"></div>
         </div>
     </div>
 </main>
