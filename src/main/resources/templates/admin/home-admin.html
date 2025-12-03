@@ -120,9 +120,11 @@
                         <p class="mb-0 text-muted" style="font-size: 0.75rem;">Administrador</p>
                     </div>
                 </div>
-                <a th:href="@{/logout}" class="btn btn-outline-danger btn-sm">
-                    <i class="bi bi-box-arrow-right"></i> Sair
-                </a>
+                <form th:action="@{/logout}" method="post" class="d-inline">
+                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                        <i class="bi bi-box-arrow-right"></i> Sair
+                    </button>
+                </form>
             </div>
         </div>
 
