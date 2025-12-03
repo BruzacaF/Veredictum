@@ -139,7 +139,7 @@
                     <h5 class="modal-title fw-bold">Editar Usuário</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form th:action="@{/admin/usuario}" method="put">
+                <form th:action="@{/admin/usuario/update}" method="post">
                     <input type="hidden" name="id" id="editUsuarioId">
                     <div class="modal-body">
                         <div class="mb-3">
@@ -194,7 +194,7 @@
                     <p class="text-muted small mb-0">Esta ação não pode ser desfeita.</p>
                 </div>
                 <div class="modal-footer border-0 pt-0">
-                    <form th:action="@{/admin/usuario}" method="delete">
+                    <form th:action="@{/admin/usuario/delete}" method="post">
                         <input type="hidden" name="id" id="deleteUsuarioId">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
                         <button type="submit" class="btn btn-danger">Excluir</button>

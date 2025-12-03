@@ -107,7 +107,7 @@ public class AdminController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Erro ao criar usuário: " + e.getMessage());
         }
-        return "redirect:/admin/usuario";
+        return "redirect:/admin";
     }
 
     @PostMapping("/usuario/update")
@@ -125,7 +125,7 @@ public class AdminController {
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Erro ao atualizar usuário: " + e.getMessage());
         }
-        return "redirect:/admin/usuario";
+        return "redirect:/admin";
     }
 
     @PostMapping("/usuario/delete")
