@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -76,8 +77,13 @@ public class AdminController {
 
     @PostMapping("/colegiado")
     public String criarColegiado(@ModelAttribute Colegiado colegiado,
+                                  BindingResult bindingResult,
                                   @RequestParam(value = "membrosIds", required = false) List<Long> membrosIds,
                                   RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("error", "Erro de validação: verifique os dados informados (data inválida?)");
+            return "redirect:/admin";
+        }
         try {
             colegiadoService.salvar(colegiado, membrosIds);
             redirectAttributes.addFlashAttribute("success", "Colegiado criado com sucesso!");
@@ -89,8 +95,13 @@ public class AdminController {
 
     @PostMapping("/colegiado/update")
     public String atualizarColegiado(@ModelAttribute Colegiado colegiado,
+                                      BindingResult bindingResult,
                                       @RequestParam(value = "membrosIds", required = false) List<Long> membrosIds,
                                       RedirectAttributes redirectAttributes) {
+        if (bindingResult.hasErrors()) {
+            redirectAttributes.addFlashAttribute("error", "Erro de validação: verifique os dados informados (data inválida?)");
+            return "redirect:/admin";
+        }
         try {
             colegiadoService.atualizar(colegiado, membrosIds);
             redirectAttributes.addFlashAttribute("success", "Colegiado atualizado com sucesso!");

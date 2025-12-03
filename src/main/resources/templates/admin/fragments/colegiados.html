@@ -106,7 +106,7 @@
                     <h5 class="modal-title fw-bold">Novo Colegiado</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form th:action="@{/admin/colegiado}" method="post">
+                <form th:action="@{/admin/colegiado}" method="post" onsubmit="return validarFormColegiado(this)">
                     <div class="modal-body">
                         <div class="mb-3">
                             <label class="form-label">Portaria <span class="text-danger">*</span></label>
@@ -120,7 +120,8 @@
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Data de Início <span class="text-danger">*</span></label>
-                            <input type="date" class="form-control" name="dataInicio" required>
+                            <input type="date" class="form-control" name="dataInicio" required
+                                   min="2000-01-01" max="2099-12-31">
                         </div>
                         <div class="mb-3">
                             <label class="form-label">Membros</label>
@@ -150,7 +151,7 @@
                     <h5 class="modal-title fw-bold">Editar Colegiado</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <form th:action="@{/admin/colegiado/update}" method="post">
+                <form th:action="@{/admin/colegiado/update}" method="post" onsubmit="return validarFormColegiado(this)">
                     <input type="hidden" name="id" id="editColegiadoId">
                     <div class="modal-body">
                         <div class="mb-3">
@@ -164,11 +165,13 @@
                         <div class="row">
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Data de Início <span class="text-danger">*</span></label>
-                                <input type="date" class="form-control" name="dataInicio" id="editDataInicio" required>
+                                <input type="date" class="form-control" name="dataInicio" id="editDataInicio" required
+                                       min="2000-01-01" max="2099-12-31">
                             </div>
                             <div class="col-md-6 mb-3">
                                 <label class="form-label">Data de Fim</label>
-                                <input type="date" class="form-control" name="dataFim" id="editDataFim">
+                                <input type="date" class="form-control" name="dataFim" id="editDataFim"
+                                       min="2000-01-01" max="2099-12-31">
                             </div>
                         </div>
                         <div class="mb-3">
@@ -213,6 +216,28 @@
     </style>
 
     <script>
+        function validarFormColegiado(form) {
+            var dataInicio = form.querySelector('input[name="dataInicio"]');
+            if (dataInicio && dataInicio.value) {
+                var ano = dataInicio.value.split('-')[0];
+                if (ano.length > 4 || parseInt(ano) < 2000 || parseInt(ano) > 2099) {
+                    alert('Data de início inválida. Use um ano entre 2000 e 2099.');
+                    dataInicio.focus();
+                    return false;
+                }
+            }
+            var dataFim = form.querySelector('input[name="dataFim"]');
+            if (dataFim && dataFim.value) {
+                var anoFim = dataFim.value.split('-')[0];
+                if (anoFim.length > 4 || parseInt(anoFim) < 2000 || parseInt(anoFim) > 2099) {
+                    alert('Data de fim inválida. Use um ano entre 2000 e 2099.');
+                    dataFim.focus();
+                    return false;
+                }
+            }
+            return true;
+        }
+
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.btn-editar-colegiado').forEach(function(btn) {
                 btn.addEventListener('click', function() {
