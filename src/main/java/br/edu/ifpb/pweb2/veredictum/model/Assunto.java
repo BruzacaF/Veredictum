@@ -1,19 +1,24 @@
 package br.edu.ifpb.pweb2.veredictum.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import lombok.Getter;
-import lombok.Setter;
+import jakarta.persistence.*;
+import lombok.Data;
+
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
-@Getter
-@Setter
+@Data
 public class Assunto {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+    private String nome;
 
-    private String descricao;
+    @OneToMany(mappedBy = "assunto")
+    private List<Processo> processos = new ArrayList<>();
+
+    @Override
+    public String toString() {
+        return nome;
+    }
 }
+

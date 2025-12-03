@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content(colegiados, professores)">
+    <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 fw-bold text-dark">Colegiados</h1>
+            <p class="text-muted mb-0">Gestão de colegiados e seus membros</p>
+        </div>
+        <button class="btn btn-primary d-flex align-items-center gap-2" data-bs-toggle="modal" data-bs-target="#modalNovoColegiado">
+            <i class="bi bi-plus-lg"></i> Novo Colegiado
+        </button>
+    </div>
+
+    <!-- Tabela de Colegiados -->
+    <div class="table-container">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th class="px-4 py-3">Portaria</th>
+                    <th class="px-4 py-3">Descrição</th>
+                    <th class="px-4 py-3">Data Início</th>
+                    <th class="px-4 py-3">Data Fim</th>
+                    <th class="px-4 py-3">Membros</th>
+                    <th class="px-4 py-3 text-end">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr th:each="colegiado : ${colegiados}">
+                    <td class="px-4 py-3">
+                        <div class="d-flex align-items-center gap-3">
+                            <div class="bg-purple-100 text-purple-600 rounded d-flex align-items-center justify-content-center" 
+                                 style="width: 36px; height: 36px;">
+                                <i class="bi bi-people-fill"></i>
+                            </div>
+                            <span class="fw-medium" th:text="${colegiado.portaria}">Portaria</span>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 text-muted" th:text="${colegiado.descricao}">Descrição</td>
+                    <td class="px-4 py-3">
+                        <span class="badge bg-success-subtle text-success" 
+                              th:text="${colegiado.dataInicio != null ? #temporals.format(colegiado.dataInicio, 'dd/MM/yyyy') : '-'}">
+                            Data
+                        </span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <span th:if="${colegiado.dataFim != null}" class="badge bg-danger-subtle text-danger" 
+                              th:text="${#temporals.format(colegiado.dataFim, 'dd/MM/yyyy')}">
+                            Data
+                        </span>
+                        <span th:if="${colegiado.dataFim == null}" class="badge bg-info-subtle text-info">Em vigor</span>
+                    </td>
+                    <td class="px-4 py-3">
+                        <div class="d-flex align-items-center">
+                            <div class="avatar-group">
+                                <th:block th:each="membro, iterStat : ${colegiado.membros}" th:if="${iterStat.index < 3}">
+                                    <div class="avatar-circle" 
+                                         th:title="${membro.nome}"
+                                         th:text="${#strings.substring(membro.nome, 0, 1).toUpperCase()}">
+                                    </div>
+                                </th:block>
+                                <div th:if="${colegiado.membros.size() > 3}" 
+                                     class="avatar-circle bg-secondary"
+                                     th:text="'+' + (${colegiado.membros.size()} - 3)">
+                                </div>
+                            </div>
+                            <span class="ms-2 text-muted small" th:text="${colegiado.membros.size()} + ' membros'">0 membros</span>
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 text-end">
+                        <div class="d-flex justify-content-end gap-1">
+                            <button class="btn btn-sm btn-light btn-editar-colegiado" 
+                                    th:attr="data-id=${colegiado.id},
+                                             data-portaria=${colegiado.portaria},
+                                             data-descricao=${colegiado.descricao},
+                                             data-datainicio=${colegiado.dataInicio},
+                                             data-datafim=${colegiado.dataFim},
+                                             data-membros=${colegiado.membrosIdsAsString}">
+                                <i class="bi bi-pencil text-primary"></i>
+                            </button>
+                            <form th:action="@{/admin/colegiado/delete}" method="post" class="d-inline"
+                                  onsubmit="return confirm('Tem certeza que deseja excluir este colegiado?');">
+                                <input type="hidden" name="id" th:value="${colegiado.id}">
+                                <button type="submit" class="btn btn-sm btn-light">
+                                    <i class="bi bi-trash text-danger"></i>
+                                </button>
+                            </form>
+                        </div>
+                    </td>
+                </tr>
+                <tr th:if="${#lists.isEmpty(colegiados)}">
+                    <td colspan="6" class="text-center py-5 text-muted">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                        Nenhum colegiado cadastrado
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Modal Novo Colegiado -->
+    <div class="modal fade" id="modalNovoColegiado" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Novo Colegiado</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form th:action="@{/admin/colegiado}" method="post" onsubmit="return validarFormColegiado(this)">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Portaria <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="portaria" required 
+                                   placeholder="Ex: Portaria nº 001/2025">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Descrição <span class="text-danger">*</span></label>
+                            <textarea class="form-control" name="descricao" rows="3" required
+                                      placeholder="Descrição do colegiado..."></textarea>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Data de Início <span class="text-danger">*</span></label>
+                            <input type="date" class="form-control" name="dataInicio" required
+                                   min="2000-01-01" max="2099-12-31">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Membros</label>
+                            <select class="form-select" name="membrosIds" multiple size="5">
+                                <option th:each="prof : ${professores}" 
+                                        th:value="${prof.id}" 
+                                        th:text="${prof.nome} + ' (' + ${prof.matricula} + ')'">
+                                </option>
+                            </select>
+                            <div class="form-text">Segure Ctrl para selecionar múltiplos membros</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Salvar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Editar Colegiado -->
+    <div class="modal fade" id="modalEditarColegiado" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title fw-bold">Editar Colegiado</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <form th:action="@{/admin/colegiado/update}" method="post" onsubmit="return validarFormColegiado(this)">
+                    <input type="hidden" name="id" id="editColegiadoId">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label">Portaria <span class="text-danger">*</span></label>
+                            <input type="text" class="form-control" name="portaria" id="editPortaria" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Descrição <span class="text-danger">*</span></label>
+                            <textarea class="form-control" name="descricao" id="editDescricao" rows="3" required></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Data de Início <span class="text-danger">*</span></label>
+                                <input type="date" class="form-control" name="dataInicio" id="editDataInicio" required
+                                       min="2000-01-01" max="2099-12-31">
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label">Data de Fim</label>
+                                <input type="date" class="form-control" name="dataFim" id="editDataFim"
+                                       min="2000-01-01" max="2099-12-31">
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Membros</label>
+                            <select class="form-select" name="membrosIds" id="editMembros" multiple size="5">
+                                <option th:each="prof : ${professores}" 
+                                        th:value="${prof.id}" 
+                                        th:text="${prof.nome} + ' (' + ${prof.matricula} + ')'">
+                                </option>
+                            </select>
+                            <div class="form-text">Segure Ctrl para selecionar múltiplos membros</div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
+                        <button type="submit" class="btn btn-primary">Atualizar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .bg-purple-100 { background-color: #f3e8ff; }
+        .text-purple-600 { color: #9333ea; }
+        .avatar-group { display: flex; }
+        .avatar-circle {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background-color: #3b82f6;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: -8px;
+            border: 2px solid white;
+        }
+        .avatar-circle:first-child { margin-left: 0; }
+    </style>
+
+    <script>
+        function validarFormColegiado(form) {
+            var dataInicio = form.querySelector('input[name="dataInicio"]');
+            if (dataInicio && dataInicio.value) {
+                var ano = dataInicio.value.split('-')[0];
+                if (ano.length > 4 || parseInt(ano) < 2000 || parseInt(ano) > 2099) {
+                    alert('Data de início inválida. Use um ano entre 2000 e 2099.');
+                    dataInicio.focus();
+                    return false;
+                }
+            }
+            var dataFim = form.querySelector('input[name="dataFim"]');
+            if (dataFim && dataFim.value) {
+                var anoFim = dataFim.value.split('-')[0];
+                if (anoFim.length > 4 || parseInt(anoFim) < 2000 || parseInt(anoFim) > 2099) {
+                    alert('Data de fim inválida. Use um ano entre 2000 e 2099.');
+                    dataFim.focus();
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.btn-editar-colegiado').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    document.getElementById('editColegiadoId').value = this.dataset.id || '';
+                    document.getElementById('editPortaria').value = this.dataset.portaria || '';
+                    document.getElementById('editDescricao').value = this.dataset.descricao || '';
+                    document.getElementById('editDataInicio').value = this.dataset.datainicio || '';
+                    document.getElementById('editDataFim').value = this.dataset.datafim || '';
+                    
+                    // Selecionar membros
+                    var membrosSelect = document.getElementById('editMembros');
+                    var membrosIds = this.dataset.membros ? this.dataset.membros.split(',') : [];
+                    Array.from(membrosSelect.options).forEach(function(opt) {
+                        opt.selected = membrosIds.includes(opt.value);
+                    });
+                    
+                    new bootstrap.Modal(document.getElementById('modalEditarColegiado')).show();
+                });
+            });
+        });
+    </script>
+</div>
+</body>
+</html>

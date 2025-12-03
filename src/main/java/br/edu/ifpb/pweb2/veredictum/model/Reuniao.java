@@ -1,28 +1,33 @@
 package br.edu.ifpb.pweb2.veredictum.model;
 
+import br.edu.ifpb.pweb2.veredictum.enums.StatusReuniao;
 import jakarta.persistence.*;
 import lombok.Data;
-import lombok.Setter;
 
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.List;
+import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
+
 @Entity
 @Data
 public class Reuniao {
-
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-    @Setter
-    private Date data;
+
+    private LocalDateTime data;
+
+    @Enumerated(EnumType.STRING)
+    private StatusReuniao status;
+
+    @Lob
+    private byte[] ata;
 
     @ManyToOne
-    @JoinColumn(name = "colegiado_id")
     private Colegiado colegiado;
 
-    @OneToMany(mappedBy = "reuniao")
-    private List<Processo> processos = new ArrayList<>();
-
-
+    @ManyToMany
+    @JoinTable(name = "reuniao_processo",
+            joinColumns = @JoinColumn(name = "reuniao_id"),
+            inverseJoinColumns = @JoinColumn(name = "processo_id"))
+    private Set<Processo> pauta = new HashSet<>();
 }

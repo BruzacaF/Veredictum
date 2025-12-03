@@ -7,5 +7,6 @@ import br.edu.ifpb.pweb2.veredictum.model.Processo;
 import java.util.List;
 
 public interface ProcessoRepositoryCustom {
-    List<Processo> filtrar(ProcessoDTOFiltro filtro, Long alunoId, RoleEnum role);
+    List<Processo> filtrar(ProcessoDTOFiltro filtro, Long usuarioId, RoleEnum role);
+    List<Processo> filtrarPorColegiado(ProcessoDTOFiltro filtro, Long colegiadoId);
 }

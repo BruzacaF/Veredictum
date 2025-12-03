@@ -2,7 +2,10 @@ package br.edu.ifpb.pweb2.veredictum.controller.controllerAdvice;
 
 
 import br.edu.ifpb.pweb2.veredictum.dto.ProcessoDTO;
+import br.edu.ifpb.pweb2.veredictum.enums.RoleEnum;
 import br.edu.ifpb.pweb2.veredictum.enums.StatusProcessoEnum;
+import br.edu.ifpb.pweb2.veredictum.model.Aluno;
+import br.edu.ifpb.pweb2.veredictum.model.Usuario;
 import br.edu.ifpb.pweb2.veredictum.repository.AssuntoRepository;
 import br.edu.ifpb.pweb2.veredictum.security.UsuarioDetails;
 import br.edu.ifpb.pweb2.veredictum.service.ProcessoService;
@@ -21,22 +24,27 @@ public class DashboardControllerAdvice {
     private AssuntoRepository assuntoRepository;
 
     @ModelAttribute
-    public void addDashboardAttributes(HttpServletRequest request , Model model, @AuthenticationPrincipal UsuarioDetails
-                                       usuario) {
+    public void addDashboardAttributes(HttpServletRequest request,
+                                       Model model,
+                                       @AuthenticationPrincipal UsuarioDetails usuario) {
         String uri = request.getRequestURI();
 
-        if (uri.startsWith("/home")) {
-            model.addAttribute("processoDTO", new ProcessoDTO());
-            if (usuario != null) {
-                model.addAttribute("usuario", usuario.getUsuario() );
-                model.addAttribute("processos", processoService.buscarPorAluno(usuario.getUsuario()));
+        if (uri.startsWith("/home/aluno")) {
+            if(!model.containsAttribute("processoDTO")){
+                model.addAttribute("processoDTO", new ProcessoDTO());
+            }
 
+            if (usuario != null) {
+                Usuario user = usuario.getUsuario();
+                model.addAttribute("usuario", user);
+
+                if (user.getRole() == RoleEnum.ALUNO) {
+                    model.addAttribute("processos", processoService.buscarPorAluno((Aluno) user));
+                }
             }
 
             model.addAttribute("status", StatusProcessoEnum.values());
             model.addAttribute("assuntos", assuntoRepository.findAll());
-
-
         }
     }
 
