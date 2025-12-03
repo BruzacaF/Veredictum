@@ -11,6 +11,7 @@ import br.edu.ifpb.pweb2.veredictum.service.AssuntoService;
 import br.edu.ifpb.pweb2.veredictum.service.UsuarioService;
 import br.edu.ifpb.pweb2.veredictum.service.ColegiadoService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -134,9 +135,25 @@ public class AdminController {
             System.out.println("Tentando excluir usuário com ID: " + id); // Debug log
             usuarioService.excluir(id);
             redirectAttributes.addFlashAttribute("success", "Usuário excluído com sucesso!");
+        } catch (DataIntegrityViolationException e) {
+            String errorMsg = "Não é possível excluir este usuário pois ele está vinculado a ";
+            String detailMsg = e.getMessage().toLowerCase();
+            
+            if (detailMsg.contains("processo")) {
+                errorMsg += "um ou mais processos. Remova os processos relacionados primeiro.";
+            } else if (detailMsg.contains("colegiado")) {
+                errorMsg += "um ou mais colegiados. Remova-o dos colegiados primeiro.";
+            } else if (detailMsg.contains("parecer")) {
+                errorMsg += "um ou mais pareceres. Remova os pareceres relacionados primeiro.";
+            } else {
+                errorMsg += "outros registros no sistema. Remova as dependências primeiro.";
+            }
+            
+            redirectAttributes.addFlashAttribute("error", errorMsg);
+            e.printStackTrace();
         } catch (Exception e) {
-            e.printStackTrace(); // Debug log
             redirectAttributes.addFlashAttribute("error", "Erro ao excluir usuário: " + e.getMessage());
+            e.printStackTrace();
         }
         return "redirect:/admin";
     }
