@@ -129,11 +129,13 @@ public class AdminController {
     }
 
     @PostMapping("/usuario/delete")
-    public String excluirUsuario(@RequestParam Long id, RedirectAttributes redirectAttributes) {
+    public String excluirUsuario(@RequestParam(name = "id") Long id, RedirectAttributes redirectAttributes) {
         try {
+            System.out.println("Tentando excluir usuário com ID: " + id); // Debug log
             usuarioService.excluir(id);
             redirectAttributes.addFlashAttribute("success", "Usuário excluído com sucesso!");
         } catch (Exception e) {
+            e.printStackTrace(); // Debug log
             redirectAttributes.addFlashAttribute("error", "Erro ao excluir usuário: " + e.getMessage());
         }
         return "redirect:/admin";

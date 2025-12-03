@@ -189,30 +189,22 @@
                     </h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body">
-                    <p>Tem certeza que deseja excluir o usuário <strong id="nomeUsuarioExcluir"></strong>?</p>
-                    <p class="text-muted small mb-0">Esta ação não pode ser desfeita.</p>
-                </div>
-                <div class="modal-footer border-0 pt-0">
-                    <form th:action="@{/admin/usuario/delete}" method="post">
+                <form th:action="@{/admin/usuario/delete}" method="post">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}"/>
+                    <div class="modal-body">
                         <input type="hidden" name="id" id="deleteUsuarioId">
+                        <p>Tem certeza que deseja excluir o usuário <strong id="nomeUsuarioExcluir"></strong>?</p>
+                        <p class="text-muted small mb-0">Esta ação não pode ser desfeita.</p>
+                    </div>
+                    <div class="modal-footer border-0 pt-0">
                         <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancelar</button>
                         <button type="submit" class="btn btn-danger">Excluir</button>
-                    </form>
-                </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 </div>
-
-<script th:inline="javascript">
-    function prepararExclusao(button) {
-        const id = button.getAttribute('data-id');
-        const nome = button.getAttribute('data-nome');
-        document.getElementById('deleteUsuarioId').value = id;
-        document.getElementById('nomeUsuarioExcluir').textContent = nome;
-    }
-</script>
 
 <style>
     .bg-purple {
