@@ -321,6 +321,15 @@
                 }
             });
     }
+
+    // Preparar exclusão de usuário
+    function prepararExclusao(button) {
+        const id = button.getAttribute('data-id');
+        const nome = button.getAttribute('data-nome');
+        console.log('ID para exclusão:', id); // Debug
+        document.getElementById('deleteUsuarioId').value = id;
+        document.getElementById('nomeUsuarioExcluir').textContent = nome;
+    }
 </script>
 </body>
 </html>
