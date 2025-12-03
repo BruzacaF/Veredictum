@@ -1,34 +1,39 @@
-
 <!doctype html>
 <html xmlns:th="http://www.thymeleaf.org">
 <body>
 <div th:fragment="form-processo">
-    <h2 class="mb-4">Gerenciar Processos</h2>
-    <!-- Sucesso -->
-    <div th:if="${success}" id="flash-message-success" class="alert alert-success">
+
+    <h1 class="h3 fw-bold mb-4">Gerenciar Processos</h1>
+
+    <!-- FLASH MESSAGES -->
+    <div th:if="${success}" id="flash-message-success" class="alert alert-success shadow-sm">
         <span th:text="${success}"></span>
     </div>
 
-    <!-- Erro -->
-    <div th:if="${error}" id="flash-message-error" class="alert alert-danger">
+    <div th:if="${error}" id="flash-message-error" class="alert alert-danger shadow-sm">
         <span th:text="${error}"></span>
     </div>
-    <!-- Formulário de criação -->
+
+    <!-- CARD DE CADASTRO -->
     <div class="card shadow-sm mb-4">
         <div class="card-body">
-            <h5>Cadastrar Novo Processo</h5>
+
+            <h5 class="fw-semibold mb-3">Cadastrar Novo Processo</h5>
 
             <form th:action="@{/processo/adicionar}" method="post" th:object="${processoDTO}">
-                <div class="mb-3">
-                    <label class="form-label">Assunto</label>
-                    <div class="text-danger" th:if="${error_assunto}" th:text="${error_assunto}"></div>
 
-                </div>
-                <div>
-                    <select class="form-select" th:field="*{assunto}" required>
+                <!-- Assunto -->
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Assunto</label>
+
+                    <!-- Erro específico -->
+                    <div class="text-danger small"
+                         th:if="${error_assunto}"
+                         th:text="${error_assunto}"></div>
+
+                    <select class="form-select mt-1" th:field="*{assunto}" required>
                         <option value="" disabled selected>Selecione um assunto</option>
 
-                        <!-- LISTA DE ASSUNTOS DO BANCO -->
                         <option th:each="assunto : ${assuntos}"
                                 th:value="${assunto.id}"
                                 th:text="${assunto.nome}">
@@ -36,18 +41,29 @@
                     </select>
                 </div>
 
+                <!-- Texto requerimento -->
                 <div class="mb-3">
-                    <label class="form-label">Texto do Requerimento</label>
-                    <div class="text-danger" th:if="${error_textoRequerimento}" th:text="${error_textoRequerimento}"></div>
+                    <label class="form-label fw-semibold">Texto do Requerimento</label>
 
+                    <div class="text-danger small"
+                         th:if="${error_textoRequerimento}"
+                         th:text="${error_textoRequerimento}"></div>
+
+                    <textarea class="form-control mt-1"
+                              th:field="*{textoRequerimento}"
+                              rows="4">
+                    </textarea>
                 </div>
-                    <textarea class="form-control" th:field="*{textoRequerimento}" rows="4" name="textoRequerimento" ></textarea>
 
+                <!-- Botão -->
+                <button type="submit" class="btn btn-primary px-4">
+                    Enviar Processo
+                </button>
 
-                <button type="submit" class="btn btn-primary">Enviar Processo</button>
             </form>
         </div>
     </div>
+
 </div>
 </body>
 </html>

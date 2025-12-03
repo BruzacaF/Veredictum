@@ -1,5 +1,7 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
+
 <head>
     <meta charset="UTF-8">
     <title>Dashboard do Aluno</title>
@@ -13,50 +15,64 @@
 
 <body class="bg-light">
 
-<!-- Header -->
+<!-- HEADER -->
 <header class="bg-primary text-white shadow-sm mb-4">
     <nav class="container d-flex justify-content-between align-items-center py-3">
-        <h2 class="h4 mb-0">
-            Bem-vindo, <span th:text="${usuario.nome}"> !</span>
+
+        <h2 class="h4 fw-bold mb-0">
+            Bem-vindo, <span th:text="${usuario.nome}">Aluno</span>
         </h2>
-        <ul class="nav">
+
+        <ul class="nav align-items-center">
             <li class="nav-item">
-                <a class="nav-link text-white fw-bold" th:href="@{/dashboard}">Dashboard</a>
+                <a class="nav-link text-white fw-semibold" th:href="@{/dashboard}">Dashboard</a>
             </li>
-            <form th:action="@{/logout}" method="post" class="d-inline">
-                <button type="submit" class="btn btn-outline-danger btn-sm">
-                    <i class="bi bi-box-arrow-right"></i> Sair
-                </button>
-            </form>
+
+            <li class="nav-item">
+                <form th:action="@{/logout}" method="post" class="ms-3">
+                    <button type="submit" class="btn btn-outline-light btn-sm px-3">
+                        Sair
+                    </button>
+                </form>
+            </li>
         </ul>
+
     </nav>
 </header>
 
-<!-- Conteúdo principal -->
+
+<!-- CONTEÚDO PRINCIPAL -->
 <div class="container py-4">
 
-    <!-- Mensagens -->
-    <div th:if="${success}" class="alert alert-success">
+    <!-- Flash messages -->
+    <div th:if="${success}" class="alert alert-success shadow-sm">
         <span th:text="${success}"></span>
     </div>
-    <div th:if="${error}" class="alert alert-danger">
+
+    <div th:if="${error}" class="alert alert-danger shadow-sm">
         <span th:text="${error}"></span>
     </div>
 
-    <!-- Card de boas-vindas -->
+    <!-- Card principal -->
     <div class="card shadow-sm">
         <div class="card-body">
-            <h5 class="card-title">Dashboard</h5>
-            <p class="card-text">
+
+            <h5 class="fw-semibold mb-2">Dashboard</h5>
+
+            <p class="text-muted mb-3">
                 Aqui você pode acessar suas informações, acompanhar processos e gerenciar suas atividades.
             </p>
-            <a th:href="@{/dashboard}" class="btn btn-primary">Ir para Dashboard</a>
+
+            <a th:href="@{/dashboard}" class="btn btn-primary px-4">
+                Ir para Dashboard
+            </a>
+
         </div>
     </div>
 
 </div>
 
-
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
 </body>
 </html>
