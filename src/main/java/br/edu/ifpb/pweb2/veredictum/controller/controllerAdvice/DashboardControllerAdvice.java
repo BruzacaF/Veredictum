@@ -30,7 +30,10 @@ public class DashboardControllerAdvice {
         String uri = request.getRequestURI();
 
         if (uri.startsWith("/home/aluno")) {
-            model.addAttribute("processoDTO", new ProcessoDTO());
+            if(!model.containsAttribute("processoDTO")){
+                model.addAttribute("processoDTO", new ProcessoDTO());
+            }
+
             if (usuario != null) {
                 Usuario user = usuario.getUsuario();
                 model.addAttribute("usuario", user);

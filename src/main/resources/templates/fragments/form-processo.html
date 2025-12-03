@@ -21,6 +21,10 @@
             <form th:action="@{/processo/adicionar}" method="post" th:object="${processoDTO}">
                 <div class="mb-3">
                     <label class="form-label">Assunto</label>
+                    <div class="text-danger" th:if="${error_assunto}" th:text="${error_assunto}"></div>
+
+                </div>
+                <div>
                     <select class="form-select" th:field="*{assunto}" required>
                         <option value="" disabled selected>Selecione um assunto</option>
 
@@ -34,8 +38,11 @@
 
                 <div class="mb-3">
                     <label class="form-label">Texto do Requerimento</label>
-                    <textarea class="form-control" th:field="*{textoRequerimento}" rows="4" name="textoRequerimento" ></textarea>
+                    <div class="text-danger" th:if="${error_textoRequerimento}" th:text="${error_textoRequerimento}"></div>
+
                 </div>
+                    <textarea class="form-control" th:field="*{textoRequerimento}" rows="4" name="textoRequerimento" ></textarea>
+
 
                 <button type="submit" class="btn btn-primary">Enviar Processo</button>
             </form>

@@ -8,7 +8,7 @@ import lombok.NoArgsConstructor;
 public class ProcessoDTOFiltro {
     private String assunto;
     private String status;
-    private String ordenacao = "DESC";
+    private String ordenacao;
     private String nomeAluno;
     private String nomeRelator;
     private Long colegiadoId;
