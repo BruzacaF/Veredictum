@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="content(totalAssuntos, totalUsuarios, totalProcessos, totalColegiados)">
+    <h1 class="h3 fw-bold mb-4">Visão Geral</h1>
+    
+    <div class="row g-4">
+        <div class="col-md-3">
+            <div class="stat-card">
+                <h6 class="text-muted mb-2">Total de Assuntos</h6>
+                <div class="stat-value text-primary" th:text="${totalAssuntos ?: 0}">0</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <h6 class="text-muted mb-2">Usuários Ativos</h6>
+                <div class="stat-value text-success" th:text="${totalUsuarios ?: 0}">0</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <h6 class="text-muted mb-2">Processos Abertos</h6>
+                <div class="stat-value text-warning" th:text="${totalProcessos ?: 0}">0</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card">
+                <h6 class="text-muted mb-2">Colegiados</h6>
+                <div class="stat-value text-info" th:text="${totalColegiados ?: 0}">0</div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+</html>
