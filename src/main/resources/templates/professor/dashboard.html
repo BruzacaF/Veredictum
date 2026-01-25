@@ -10,17 +10,13 @@
 
 <body class="bg-light">
 
-<!-- Header Fragment -->
 <div th:replace="~{layout/header :: header(usuario=${usuario})}"></div>
 
 <div class="container py-4">
-    <div th:replace="~{fragments/form-processo :: form-processo(usuario=${usuario}, assuntos=${assuntos}, processoDTO=${processoDTO})}"></div>
-
     <div th:replace="fragments/painelProcessos :: painel-processos"></div>
 
 </div>
 
-<!-- Footer Fragment -->
 <div th:replace="~{layout/footer :: footer}"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -71,3 +67,4 @@
 
 </body>
 </html>
+

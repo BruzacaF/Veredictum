@@ -30,7 +30,7 @@ public class CustomAuthenticationSuccessHandler implements AuthenticationSuccess
                 redirectUrl = "/home/aluno";
                 break;
             case PROFESSOR:
-                redirectUrl = "/professor/dashboard";
+                redirectUrl = "/home/professor";
                 break;
             case COORDENADOR:
                 redirectUrl = "/coordenador/processos";

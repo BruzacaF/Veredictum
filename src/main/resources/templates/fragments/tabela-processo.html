@@ -26,6 +26,7 @@
                     <thead class="table-light">
                     <tr>
                         <th class="fw-semibold">Número</th>
+                        <th class="fw-semibold" th:if="${isProfessor}" >Aluno</th>
                         <th class="fw-semibold">Assunto</th>
                         <th class="fw-semibold">Status</th>
                         <th class="fw-semibold">Data de Criação</th>
@@ -36,6 +37,7 @@
                     <tbody>
                     <tr th:each="proc : ${processos}">
                         <td th:text="${proc.numero}">Número</td>
+                        <td th:text="${proc.aluno.nome}" th:if="${isProfessor}">Aluno</td>
                         <td th:text="${proc.assunto.nome}">Assunto</td>
                         <td th:text="${proc.status}">Status</td>
                         <td th:text="${#temporals.format(proc.dataCriacao, 'dd/MM/yyyy')}">Data</td>
