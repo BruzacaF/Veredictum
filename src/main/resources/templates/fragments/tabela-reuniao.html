@@ -1,140 +1,72 @@
-<div th:fragment="tabela-processo(reunioes, status)">
+<div th:fragment="tabela-reuniao(reunioes, status)">
 
-    <div class="container mt-4">
+    <div class="card shadow-sm">
+        <div class="card-body">
 
-        <!-- Feedback -->
-        <div class="alert alert-info mb-4"
-             th:if="${reunioesProgramadasCount > 0}">
-            🗓️ Você tem
-            <strong th:text="${reunioesProgramadasCount}"></strong>
-            reuniões programadas.
-        </div>
+            <h5 class="fw-semibold mb-3">Reuniões do Colegiado</h5>
 
-        <h4 class="fw-semibold mb-3">Reuniões do Colegiado</h4>
+            <!-- FEEDBACK -->
+            <div th:if="${reunioes != null}"
+                 class="alert alert-info d-flex align-items-center gap-2">
 
-        <!-- Filtros -->
-        <form method="get" class="row g-3 mb-4">
-
-            <div class="col-md-3">
-                <label class="form-label">Status</label>
-                <select name="status" class="form-select">
-                    <option value="">Todos</option>
-                    <option th:each="status : ${status.values()}"
-                            th:value="${status}"
-                            th:text="${status}"
-                            th:selected="${status == statusFiltro}">
-                    </option>
-                </select>
+                <span class="fw-semibold">
+                    🗓️ <span th:text="${reunioes.size()}"></span> reuniões encontradas
+                </span>
             </div>
 
-            <div class="col-md-3">
-                <label class="form-label">Data</label>
-                <input type="date"
-                       name="data"
-                       class="form-control"
-                       th:value="${dataFiltro}">
+            <div th:if="${reunioes.size() == 0}"
+                 class="alert alert-warning d-flex align-items-center gap-2">
+
+                <span class="fw-semibold">
+                    📁 Nenhuma reunião encontrada com este filtro
+                </span>
             </div>
 
-            <div class="col-md-3 align-self-end">
-                <button class="btn btn-primary w-100">Filtrar</button>
-            </div>
+            <!-- TABELA -->
+            <div class="table-responsive">
+                <table class="table table-striped table-hover align-middle">
+                    <thead class="table-light">
+                    <tr>
+                        <th class="fw-semibold">Data</th>
+                        <th class="fw-semibold">Colegiado</th>
+                        <th class="fw-semibold">Status</th>
+                        <th class="fw-semibold text-center">Ações</th>
+                    </tr>
+                    </thead>
 
-        </form>
+                    <tbody>
+                    <tr th:each="reuniao : ${reunioes}">
+                        <td th:text="${#temporals.format(reuniao.data, 'dd/MM/yyyy HH:mm')}">
+                            Data
+                        </td>
 
-        <!-- Abas -->
-        <ul class="nav nav-tabs mb-3" role="tablist">
-            <li class="nav-item">
-                <button class="nav-link active"
-                        data-bs-toggle="tab"
-                        data-bs-target="#ativas"
-                        type="button">
-                    📂 Programadas / Em andamento
-                </button>
-            </li>
+                        <td th:text="${reuniao.colegiado.descricao}">
+                            Colegiado
+                        </td>
 
-            <li class="nav-item">
-                <button class="nav-link"
-                        data-bs-toggle="tab"
-                        data-bs-target="#encerradas"
-                        type="button">
-                    📁 Encerradas
-                </button>
-            </li>
-        </ul>
+                        <td th:text="${reuniao.status}">
+                            Status
+                        </td>
 
-        <div class="tab-content">
+                        <td class="text-center">
+                            <a th:href="@{/reunioes/{id}(id=${reuniao.id})}"
+                               class="btn btn-sm btn-outline-primary px-3">
+                                Detalhes
+                            </a>
 
-            <!-- ABA ATIVAS -->
-            <div class="tab-pane fade show active" id="ativas">
+                            <a th:if="${reuniao.status == T(br.edu.ifpb.pweb2.veredictum.enums.StatusReuniao).ENCERRADA}"
+                               th:href="@{/reunioes/{id}/ata(id=${reuniao.id})}"
+                               class="btn btn-sm btn-outline-success px-3 ms-1">
+                                Ata
+                            </a>
+                        </td>
+                    </tr>
+                    </tbody>
 
-                <div th:if="${#lists.isEmpty(reunioes)}"
-                     class="text-muted">
-                    Nenhuma reunião encontrada.
-                </div>
-
-                <div class="list-group">
-
-                    <div class="list-group-item"
-                         th:each="reuniao : ${reunioes}"
-                         th:if="${reuniao.status != T(seu.pacote.StatusReuniao).ENCERRADA}">
-
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong th:text="${#temporals.format(reuniao.data, 'dd/MM/yyyy HH:mm')}"></strong>
-                                <span class="badge bg-warning ms-2"
-                                      th:text="${reuniao.status}">
-                            </span>
-                            </div>
-
-                            <div>
-                                <a th:href="@{/reunioes/{id}(id=${reuniao.id})}"
-                                   class="btn btn-sm btn-outline-primary">
-                                    Ver pauta
-                                </a>
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-            </div>
-
-            <!-- ABA ENCERRADAS -->
-            <div class="tab-pane fade" id="encerradas">
-
-                <div class="list-group">
-
-                    <div class="list-group-item"
-                         th:each="reuniao : ${reunioes}"
-                         th:if="${reuniao.status == status.ENCERRADA}">
-
-                        <div class="d-flex justify-content-between align-items-center">
-                            <div>
-                                <strong th:text="${#temporals.format(reuniao.data, 'dd/MM/yyyy HH:mm')}"></strong>
-                                <span class="badge bg-success ms-2">
-                                ENCERRADA
-                            </span>
-                            </div>
-
-                            <div class="d-flex gap-2">
-                                <a th:href="@{/reunioes/{id}(id=${reuniao.id})}"
-                                   class="btn btn-sm btn-outline-secondary">
-                                    Ver pauta
-                                </a>
-
-                                <a th:href="@{/reunioes/{id}/ata(id=${reuniao.id})}"
-                                   class="btn btn-sm btn-outline-success">
-                                    Ver ata
-                                </a>
-                            </div>
-                        </div>
-
-                    </div>
-
-                </div>
+                </table>
             </div>
 
         </div>
     </div>
-
 
 </div>

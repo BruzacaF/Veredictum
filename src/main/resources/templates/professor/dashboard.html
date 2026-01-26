@@ -5,6 +5,8 @@
     <title>Dashboard do Aluno</title>
 
     <!-- Bootstrap -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 
@@ -40,12 +42,13 @@
 
         <!-- Painel Processos -->
         <div class="tab-pane fade show active" id="painel-processos">
-            <div th:replace="fragments/painelProcessos :: painel-processos"></div>
+            <div th:replace="fragments/painel :: painel"></div>
         </div>
 
         <!-- Painel Reuniões -->
         <div class="tab-pane fade" id="painel-reunioes">
-            <div th:replace="fragments/painelReuniao :: painel-reuniao"></div>
+            <div th:replace="~{fragments/painel-reuniao :: painel-reuniao}"></div>
+
         </div>
 
     </div>
@@ -63,6 +66,9 @@
         if (msg) msg.style.display = "none";
         if (err) err.style.display = "none";
     }, 3000);
+
+
+    // PARA TABELA PROCESSOS --------------------------------------------------
 
     async function carregarTabelaComFiltros(paramsObject) {
         const params = new URLSearchParams(paramsObject).toString();
@@ -97,8 +103,43 @@
         document.getElementById('filtroOrdenacao').value = ordenacao;
     });
 
+    // -------------------------------------------------- --------------------------------------------------
+
+    // PARA TABELA REUNIOES
+
+    document.addEventListener("DOMContentLoaded", () => {
+
+        const tabReunioes = document.querySelector('[data-bs-target="#painel-reunioes"]');
+        const container = document.getElementById("painel-reunioes");
+
+        let carregado = false;
+
+        tabReunioes.addEventListener("shown.bs.tab", () => {
+            if (!carregado) {
+                carregarReunioes();
+                carregado = true;
+            }
+        });
+
+        function carregarReunioes(params = "") {
+            fetch(`/reuniao/professor/Listar${params}`)
+                .then(res => res.text())
+                .then(html => container.innerHTML = html);
+        }
+
+        document.addEventListener("submit", e => {
+            if (e.target.closest("form[formReunioes]")) {
+                e.preventDefault();
+                const form = e.target;
+                const params = new URLSearchParams(new FormData(form)).toString();
+                carregarReunioes("?" + params);
+            }
+        });
+    });
 
 </script>
+
+
 
 </body>
 </html>

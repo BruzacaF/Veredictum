@@ -75,10 +75,10 @@ public class ProcessoController {
                 usuario.getRole()
         );
 
-        model.addAttribute("processos", processos);
+        model.addAttribute("itensTabela", processos);
 
         if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
-            return "fragments/tabela-processo :: tabela-processo";
+            return "fragments/tabela-processo-aluno :: tabela-processo";
         }
 
         return "processo/listar";
