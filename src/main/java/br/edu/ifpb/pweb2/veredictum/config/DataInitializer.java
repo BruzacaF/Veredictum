@@ -2,6 +2,7 @@ package br.edu.ifpb.pweb2.veredictum.config;
 
 import br.edu.ifpb.pweb2.veredictum.enums.RoleEnum;
 import br.edu.ifpb.pweb2.veredictum.enums.StatusProcessoEnum;
+import br.edu.ifpb.pweb2.veredictum.enums.StatusReuniao;
 import br.edu.ifpb.pweb2.veredictum.model.*;
 import br.edu.ifpb.pweb2.veredictum.repository.*;
 import org.springframework.boot.CommandLineRunner;
@@ -10,6 +11,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Configuration
 public class DataInitializer {
@@ -20,7 +23,8 @@ public class DataInitializer {
                                    ProfessorRepository professorRepository,
                                    AssuntoRepository assuntoRepository,
                                    ProcessoRepository processoRepository,
-                                   ColegiadoRepository colegiadoRepository) {
+                                   ColegiadoRepository colegiadoRepository,
+                                   ReuniaoRepository reuniaoRepository) {
 
         return args -> {
 
@@ -37,6 +41,8 @@ public class DataInitializer {
             colegiado.setDataInicio(LocalDate.of(2024, 1, 1));
             colegiado.setDataFim(LocalDate.of(2025, 12, 31));
             colegiadoRepository.save(colegiado);
+
+
 
             // ---------------------------
             // Criar Usuários
@@ -132,6 +138,31 @@ public class DataInitializer {
             processoRepository.save(p1);
             processoRepository.save(p2);
             processoRepository.save(p3);
+
+            // Reunião PROGRAMADA
+            Reuniao r1 = new Reuniao();
+            r1.setData(LocalDateTime.now().plusDays(3));
+            r1.setStatus(StatusReuniao.PROGRAMADA);
+            r1.setColegiado(colegiado);
+            r1.getPauta().add(p1);
+            r1.getPauta().add(p2);
+
+// Reunião EM ANDAMENTO
+            Reuniao r2 = new Reuniao();
+            r2.setData(LocalDateTime.now().minusHours(1));
+            r2.setStatus(StatusReuniao.EM_ANDAMENTO);
+            r2.setColegiado(colegiado);
+            r2.getPauta().add(p3);
+
+// Reunião ENCERRADA
+            Reuniao r3 = new Reuniao();
+            r3.setData(LocalDateTime.now().minusDays(7));
+            r3.setStatus(StatusReuniao.ENCERRADA);
+            r3.setColegiado(colegiado);
+            r3.getPauta().add(p1);
+            r3.getPauta().add(p3);
+
+            reuniaoRepository.saveAll(List.of(r1, r2, r3));
 
             System.out.println("✔ Dados iniciais criados com sucesso!");
             System.out.println("📧 Logins disponíveis:");

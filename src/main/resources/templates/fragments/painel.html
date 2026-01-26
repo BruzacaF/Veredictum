@@ -51,13 +51,13 @@
 
             <!-- TABELA ALUNO -->
             <div th:if="${isAluno}">
-                <div th:replace="fragments/tabela-processo-aluno:: tabela-processo-aluno(${itensTabela},${status},${assuntos})">
+                <div th:replace="fragments/tabela-processo-aluno:: tabela-processo(${itensTabela},${status})">
                 </div>
             </div>
 
             <!-- TABELA PROFESSOR -->
             <div th:if="${isProfessor}">
-                <div th:replace="fragments/tabela-processo-professor:: tabela-processo-professor(${itensTabela})">
+                <div th:replace="fragments/tabela-processo-aluno:: tabela-processo(${itensTabela},${status})">
                 </div>
             </div>
 

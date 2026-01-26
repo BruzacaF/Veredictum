@@ -1,11 +1,14 @@
 package br.edu.ifpb.pweb2.veredictum.controller;
 
+import br.edu.ifpb.pweb2.veredictum.enums.StatusReuniao;
 import br.edu.ifpb.pweb2.veredictum.model.Aluno;
 import br.edu.ifpb.pweb2.veredictum.model.Processo;
 import br.edu.ifpb.pweb2.veredictum.model.Professor;
+import br.edu.ifpb.pweb2.veredictum.model.Reuniao;
 import br.edu.ifpb.pweb2.veredictum.repository.AssuntoRepository;
 import br.edu.ifpb.pweb2.veredictum.security.UsuarioDetails;
 import br.edu.ifpb.pweb2.veredictum.service.ProcessoService;
+import br.edu.ifpb.pweb2.veredictum.service.ReuniaoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
@@ -23,12 +26,14 @@ public class HomeController {
     private ProcessoService processoService;
     @Autowired
     private AssuntoRepository assuntoRepository;
+    @Autowired
+    private ReuniaoService reuniaoService;
 
     @GetMapping("/aluno")
     public String home(Model model, @AuthenticationPrincipal UsuarioDetails usuario) {
 
         List<Processo> processos = processoService.buscarPorAluno((Aluno) usuario.getUsuario());
-        model.addAttribute("processos", processos);
+        model.addAttribute("itensTabela", processos);
 
         return "aluno/dashboard";
     }
@@ -37,7 +42,10 @@ public class HomeController {
     public String professor(Model model, @AuthenticationPrincipal UsuarioDetails usuario) {
 
         List<Processo> processos = processoService.buscarPorProfessorRelator((Professor) usuario.getUsuario());
-        model.addAttribute("processos", processos);
+        List<Reuniao>  reuniaoList = reuniaoService.buscarPorProfessor((Professor) usuario.getUsuario());
+        model.addAttribute("itensTabela", processos);
+        model.addAttribute("reunioes", reuniaoList);
+        model.addAttribute("status", StatusReuniao.values());
         return "professor/dashboard";
     }
 
