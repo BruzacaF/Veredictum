@@ -36,6 +36,8 @@ public class Processo {
     @NotBlank
     private String textoRequerimento;
 
+    private String caminhoArquivo;
+
     @Lob
     private byte[] parecer;
 

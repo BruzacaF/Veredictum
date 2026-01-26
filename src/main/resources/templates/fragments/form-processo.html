@@ -20,40 +20,51 @@
 
             <h5 class="fw-semibold mb-3">Cadastrar Novo Processo</h5>
 
-            <form th:action="@{/processo/adicionar}" method="post" th:object="${processoDTO}">
+            <form th:action="@{/processo/adicionar}" method="post" th:object="${processoDTO}" enctype="multipart/form-data">
 
                 <!-- Assunto -->
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Assunto</label>
 
-                    <!-- Erro específico -->
                     <div class="text-danger small"
-                         th:if="${error_assunto}"
-                         th:text="${error_assunto}"></div>
+                         th:if="${#fields.hasErrors('assunto')}"
+                         th:errors="*{assunto}"></div>
 
                     <select class="form-select mt-1" th:field="*{assunto}" required>
-                        <option value="" disabled selected>Selecione um assunto</option>
+                        <option value="" disabled>Selecione um assunto</option>
 
                         <option th:each="assunto : ${assuntos}"
                                 th:value="${assunto.id}"
                                 th:text="${assunto.nome}">
                         </option>
+
                     </select>
                 </div>
 
-                <!-- Texto requerimento -->
                 <div class="mb-3">
                     <label class="form-label fw-semibold">Texto do Requerimento</label>
 
                     <div class="text-danger small"
-                         th:if="${error_textoRequerimento}"
-                         th:text="${error_textoRequerimento}"></div>
+                         th:if="${#fields.hasErrors('textoRequerimento')}"
+                         th:errors="*{textoRequerimento}"></div>
 
                     <textarea class="form-control mt-1"
                               th:field="*{textoRequerimento}"
-                              rows="4">
-                    </textarea>
+                              rows="4"></textarea>
                 </div>
+
+                <div class="mb-3">
+                    <label class="form-label fw-semibold">Anexo (opcional)</label>
+
+                    <div class="text-danger small"
+                         th:if="${#fields.hasErrors('arquivo')}"
+                         th:errors="*{arquivo}"></div>
+
+                    <input type="file"
+                           class="form-control"
+                           th:field="*{arquivo}">
+                </div>
+
 
                 <!-- Botão -->
                 <button type="submit" class="btn btn-primary px-4">

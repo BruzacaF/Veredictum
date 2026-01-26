@@ -9,10 +9,17 @@ import br.edu.ifpb.pweb2.veredictum.model.Professor;
 import br.edu.ifpb.pweb2.veredictum.repository.ProcessoRepository;
 import br.edu.ifpb.pweb2.veredictum.repository.ProfessorRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
+
 
 @Service
 public class ProcessoService {
@@ -23,22 +30,38 @@ public class ProcessoService {
     @Autowired
     private ProfessorRepository professorRepository;
 
+    @Value("${upload.dir}")
+    private String uploadDir;
+
     public Processo criar(ProcessoDTO processoDTO, Aluno aluno) {
         try {
+
             Processo processo = new Processo();
             processo.setAssunto(processoDTO.getAssunto());
             processo.setTextoRequerimento(processoDTO.getTextoRequerimento());
             processo.setAluno(aluno);
             processo.setStatus(StatusProcessoEnum.CRIADO);
             processo.setDataCriacao(LocalDate.now());
+
+            MultipartFile arquivo = processoDTO.getArquivo();
             
             String ano = String.valueOf(LocalDate.now().getYear());
             Long sequencial = processoRepository.count() + 1;
             processo.setNumero(ano + "-" + String.format("%03d", sequencial));
 
+            if(arquivo != null && arquivo.isEmpty()){
+                String nomeArquivo = UUID.randomUUID() + "_" +
+                        arquivo.getOriginalFilename();
+                Path destino = Paths.get(uploadDir, "processos", nomeArquivo);
+                Files.createDirectories(destino.getParent());
+                processoDTO.getArquivo().transferTo(destino.toFile());
+
+                processo.setCaminhoArquivo(nomeArquivo);
+            }
+
             return processoRepository.save(processo);
         } catch (Exception e) {
-            throw new RuntimeException("Erro ao salvar processo", e);
+            throw new RuntimeException("Erro ao salvar processo" + e.getMessage(), e);
         }
     }
 

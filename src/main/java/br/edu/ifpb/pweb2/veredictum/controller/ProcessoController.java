@@ -16,7 +16,6 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -40,12 +39,7 @@ public class ProcessoController {
                                     @AuthenticationPrincipal UsuarioDetails usuarioDetails,
                                     Model model) {
         if (result.hasErrors()) {
-            for (FieldError error : result.getFieldErrors()){
-                System.out.println(error.getField() + ": " + error.getDefaultMessage());
-                redirectAttributes.addFlashAttribute("error_" + error.getField(), error.getDefaultMessage());
-            }
-            redirectAttributes.addFlashAttribute("processoDTO", processo);
-            return "redirect:/home/aluno";
+            return "aluno/dashboard";
         }
 
             try {
