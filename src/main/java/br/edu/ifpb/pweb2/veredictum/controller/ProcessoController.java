@@ -2,8 +2,6 @@ package br.edu.ifpb.pweb2.veredictum.controller;
 
 import br.edu.ifpb.pweb2.veredictum.dto.ProcessoDTO;
 import br.edu.ifpb.pweb2.veredictum.dto.ProcessoDTOFiltro;
-import br.edu.ifpb.pweb2.veredictum.enums.RoleEnum;
-import br.edu.ifpb.pweb2.veredictum.enums.StatusProcessoEnum;
 import br.edu.ifpb.pweb2.veredictum.model.Aluno;
 import br.edu.ifpb.pweb2.veredictum.model.Processo;
 import br.edu.ifpb.pweb2.veredictum.model.Professor;
@@ -22,9 +20,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Controller
 @RequestMapping("/processo")
@@ -66,16 +62,11 @@ public class ProcessoController {
     public String listar(
             @RequestParam(required = false) String assunto,
             @RequestParam(required = false) String status,
-            @RequestParam(required = false, defaultValue = "DESC" )String ordenacao,
-            Model model,
+            @RequestParam(defaultValue = "DESC") String ordenacao,
             @AuthenticationPrincipal UsuarioDetails usuarioDetails,
-            @RequestHeader(value = "X-Requested-With", required = false) String requestedWith
+            @RequestHeader(value = "X-Requested-With", required = false) String requestedWith,
+            Model model
     ) {
-
-        Map<String, Object> params = new HashMap<>();
-        params.put("assunto", assunto);
-        params.put("status", status);
-        params.put("ordencao", ordenacao);
 
         ProcessoDTOFiltro filtro = new ProcessoDTOFiltro();
         filtro.setAssunto(assunto);
@@ -83,36 +74,32 @@ public class ProcessoController {
         filtro.setOrdenacao(ordenacao);
 
         Usuario usuario = usuarioDetails.getUsuario();
-        Long usuarioId = usuarioDetails.getUsuario().getId();
-        RoleEnum role = usuario.getRole();
 
-        System.out.println(filtro.getOrdenacao());
-
-        List<Processo> processos = processoRepository.filtrar(filtro, usuarioId, role);
-        model.addAttribute("assuntos", assuntoRepository.findAll());
-        model.addAttribute("usuario", usuario);
+        List<Processo> processos = processoRepository.filtrar(
+                filtro,
+                usuario.getId(),
+                usuario.getRole()
+        );
 
         model.addAttribute("processos", processos);
-        model.addAttribute("listaStatus", StatusProcessoEnum.values());
-        model.addAttribute(
-                "param", params
-        );
 
         if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
             return "fragments/tabela-processo :: tabela-processo";
         }
+
         return "processo/listar";
     }
 
 
-    @GetMapping("/professor/listarRelator")
+
+    @GetMapping("/professor/listarProcessos")
     public String listarRelator(
             @AuthenticationPrincipal UsuarioDetails usuarioDetails
     ) {
 
         processoService.buscarPorProfessorRelator((Professor) usuarioDetails.getUsuario());
 
-        return "redirect:/home";
+        return "redirect:/professor/processoTabela";
 
     }
 
