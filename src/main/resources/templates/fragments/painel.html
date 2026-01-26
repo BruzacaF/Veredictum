@@ -1,0 +1,74 @@
+<th:block th:fragment="painel">
+
+    <section class="card p-3">
+
+        <header class="mb-3">
+            <h5 class="mb-0">Processos</h5>
+        </header>
+
+        <!-- FILTROS (REUTILIZÁVEIS) -->
+        <form id="form-filtros" class="row g-3 mb-3">
+            <div class="col-md-4">
+                <label class="form-label">Buscar por Assunto</label>
+                <select class="form-select" id="filtroAssunto" name="assunto">
+                    <option value="">Todos</option>
+                    <option th:each="assunto : ${assuntos}"
+                            th:value="${assunto.nome}"
+                            th:text="${assunto.nome}">
+                    </option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Filtrar por Status</label>
+                <select class="form-select" id="filtroStatus" name="status">
+                    <option value="">Todos</option>
+                    <option th:each="st : ${statusProcesso}"
+                            th:value="${st}"
+                            th:text="${st}">
+                    </option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Ordenar por Data</label>
+                <select class="form-select" id="filtroOrdenacao" name="ordenacao">
+                    <option value="ASC">Mais Antigos</option>
+                    <option value="DESC" selected>Mais Recentes</option>
+                </select>
+            </div>
+
+            <div class="col-md-2 d-flex align-items-end">
+                <button class="btn btn-secondary w-100" type="button" id="btnFiltrar">
+                    Filtrar
+                </button>
+            </div>
+        </form>
+
+        <!-- TABELAS -->
+        <div id="tabela-container"
+             th:if="${not #lists.isEmpty(itensTabela)}">
+
+            <!-- TABELA ALUNO -->
+            <div th:if="${isAluno}">
+                <div th:replace="fragments/tabela-processo-aluno:: tabela-processo-aluno(${itensTabela},${status},${assuntos})">
+                </div>
+            </div>
+
+            <!-- TABELA PROFESSOR -->
+            <div th:if="${isProfessor}">
+                <div th:replace="fragments/tabela-processo-professor:: tabela-processo-professor(${itensTabela})">
+                </div>
+            </div>
+
+        </div>
+
+        <!-- EMPTY STATE -->
+        <div class="text-muted text-center py-4"
+             th:if="${#lists.isEmpty(itensTabela)}">
+            Nenhum resultado encontrado com os filtros aplicados.
+        </div>
+
+    </section>
+
+</th:block>

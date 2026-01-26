@@ -15,4 +15,6 @@ public class ProfessorService {
     public List<Professor> buscarPorColegiadoId(Long colegiadoId){
         return professorRepository.findByColegiadoId(colegiadoId);
     }
+
+
 }

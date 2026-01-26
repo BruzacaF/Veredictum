@@ -13,7 +13,42 @@
 <div th:replace="~{layout/header :: header(usuario=${usuario})}"></div>
 
 <div class="container py-4">
-    <div th:replace="fragments/painelProcessos :: painel-processos"></div>
+
+    <!-- Abas -->
+    <ul class="nav nav-tabs mb-4">
+        <li class="nav-item">
+            <button class="nav-link active"
+                    data-bs-toggle="tab"
+                    data-bs-target="#painel-processos"
+                    type="button">
+                📄 Meus Processos
+            </button>
+        </li>
+
+        <li class="nav-item">
+            <button class="nav-link"
+                    data-bs-toggle="tab"
+                    data-bs-target="#painel-reunioes"
+                    type="button">
+                🗓️ Reuniões do Colegiado
+            </button>
+        </li>
+    </ul>
+
+    <!-- Conteúdo das abas -->
+    <div class="tab-content">
+
+        <!-- Painel Processos -->
+        <div class="tab-pane fade show active" id="painel-processos">
+            <div th:replace="fragments/painelProcessos :: painel-processos"></div>
+        </div>
+
+        <!-- Painel Reuniões -->
+        <div class="tab-pane fade" id="painel-reunioes">
+            <div th:replace="fragments/painelReuniao :: painel-reuniao"></div>
+        </div>
+
+    </div>
 
 </div>
 

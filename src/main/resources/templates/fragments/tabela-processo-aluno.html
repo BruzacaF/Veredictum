@@ -1,4 +1,4 @@
-<div th:fragment="tabela-processo(processos, status, assuntos)">
+<div th:fragment="tabela-processo-aluno(itensTabela, status, assuntos)">
 
     <div class="card shadow-sm">
         <div class="card-body">
@@ -9,11 +9,11 @@
             <div th:if="${processos.size() > 0}"
                  class="alert alert-info d-flex align-items-center gap-2">
                 <span class="fw-semibold">
-                    🔍 <span th:text="${processos.size()}"></span> processos encontrados
+                    🔍 <span th:text="${itensTabela.size()}"></span> processos encontrados
                 </span>
             </div>
 
-            <div th:if="${processos.size() == 0}"
+            <div th:if="${itensTabela.size() == 0}"
                  class="alert alert-warning d-flex align-items-center gap-2">
                 <span class="fw-semibold">
                     📂 Nenhum processo encontrado com este filtro
@@ -35,12 +35,12 @@
                     </thead>
 
                     <tbody>
-                    <tr th:each="proc : ${processos}">
-                        <td th:text="${proc.numero}">Número</td>
-                        <td th:text="${proc.aluno.nome}" th:if="${isProfessor}">Aluno</td>
-                        <td th:text="${proc.assunto.nome}">Assunto</td>
-                        <td th:text="${proc.status}">Status</td>
-                        <td th:text="${#temporals.format(proc.dataCriacao, 'dd/MM/yyyy')}">Data</td>
+                    <tr th:each="proc : ${itensTabela}">
+                        <td th:text="${itensTabela.numero}">Número</td>
+                        <td th:text="${itensTabela.aluno.nome}" th:if="${isProfessor}">Aluno</td>
+                        <td th:text="${itensTabela.assunto.nome}">Assunto</td>
+                        <td th:text="${itensTabela.status}">Status</td>
+                        <td th:text="${#temporals.format(itensTabela.dataCriacao, 'dd/MM/yyyy')}">Data</td>
 
                         <td class="text-center">
                             <a th:href="@{/processo/detalhes/{id}(id=${proc.id})}"
