@@ -121,6 +121,15 @@
                                    class="btn btn-sm btn-outline-primary" title="Ver detalhes">
                                     <i class="bi bi-eye"></i>
                                 </a>
+                                <button th:if="${sessao.status.name() != 'REALIZADA'}"
+                                        type="button" 
+                                        class="btn btn-sm btn-outline-danger ms-1" 
+                                        title="Excluir sessão"
+                                        onclick="confirmarExclusao(this)"
+                                        th:data-id="${sessao.id}"
+                                        th:data-data="${#temporals.format(sessao.data, 'dd/MM/yyyy HH:mm')}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             </td>
                         </tr>
                     </tbody>
@@ -252,6 +261,29 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     });
 });
+
+function confirmarExclusao(button) {
+    const sessaoId = button.getAttribute('data-id');
+    const sessaoData = button.getAttribute('data-data');
+    
+    if (confirm(`Tem certeza que deseja excluir a sessão do dia ${sessaoData}?\n\nEsta ação não pode ser desfeita.`)) {
+        // Criar formulário para submeter via POST
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/coordenador/sessao/${sessaoId}/excluir`;
+        
+        // Adicionar CSRF token
+        const csrfToken = document.querySelector('input[name="_csrf"]').value;
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '_csrf';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
 </script>
 </body>
 </html>

@@ -194,6 +194,72 @@ public class CoordenadorController {
         }
     }
 
+    @GetMapping("/sessao/{id}")
+    @Transactional(readOnly = true)
+    public String visualizarSessao(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UsuarioDetails usuarioDetails,
+            Model model
+    ) {
+        try {
+            Professor coordenador = obterCoordenador(usuarioDetails);
+            Reuniao sessao = reuniaoService.buscarPorIdComPauta(id);
+            
+            if (sessao == null) {
+                throw new RuntimeException("Sessão não encontrada");
+            }
+            
+            // Verificar se o coordenador tem acesso a esta sessão
+            if (!sessao.getCoordenador().getId().equals(coordenador.getId())) {
+                throw new RuntimeException("Acesso negado a esta sessão");
+            }
+            
+            model.addAttribute("sessao", sessao);
+            model.addAttribute("usuario", coordenador);
+            
+            return "coordenador/detalhes-sessao";
+        } catch (RuntimeException e) {
+            model.addAttribute("error", e.getMessage());
+            return "redirect:/coordenador/sessoes";
+        }
+    }
+
+    @PostMapping("/sessao/{id}/excluir")
+    @Transactional
+    public String excluirSessao(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UsuarioDetails usuarioDetails,
+            RedirectAttributes redirectAttributes
+    ) {
+        try {
+            Professor coordenador = obterCoordenador(usuarioDetails);
+            Reuniao sessao = reuniaoService.buscarPorIdComPauta(id);
+            
+            if (sessao == null) {
+                throw new RuntimeException("Sessão não encontrada");
+            }
+            
+            // Verificar se o coordenador tem permissão para excluir esta sessão
+            if (!sessao.getCoordenador().getId().equals(coordenador.getId())) {
+                throw new RuntimeException("Acesso negado. Apenas o coordenador responsável pode excluir esta sessão.");
+            }
+            
+            // Não permitir excluir sessões já realizadas
+            if (sessao.getStatus() == StatusReuniao.REALIZADA) {
+                throw new RuntimeException("Não é possível excluir sessões já realizadas.");
+            }
+            
+            reuniaoService.excluirSessao(id);
+            
+            redirectAttributes.addFlashAttribute("success", "✅ Sessão excluída com sucesso!");
+            return "redirect:/coordenador/sessoes";
+            
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", "❌ Erro ao excluir sessão: " + e.getMessage());
+            return "redirect:/coordenador/sessoes";
+        }
+    }
+
     private Professor obterCoordenador(UsuarioDetails usuarioDetails) {
         Long coordenadorId = usuarioDetails.getUsuario().getId();
         Professor coordenador = (Professor) usuarioRepository.findById(coordenadorId)

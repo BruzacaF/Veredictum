@@ -91,4 +91,23 @@ public class ReuniaoService {
     public List<Reuniao> listarPorCoordenador(Professor professor){
         return reuniaoRepository.findByCoordenador(professor);
     }
+
+    @Transactional
+    public void excluirSessao(Long id) {
+        Reuniao reuniao = reuniaoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Sessão não encontrada"));
+        
+        // Remover processos da pauta e atualizar seus status
+        if (reuniao.getPauta() != null && !reuniao.getPauta().isEmpty()) {
+            for (Processo processo : reuniao.getPauta()) {
+                processo.setReuniao(null);
+                if (processo.getStatus() == StatusProcessoEnum.EM_PAUTA) {
+                    processo.setStatus(StatusProcessoEnum.DISTRIBUIDO);
+                }
+                processoRepository.save(processo);
+            }
+        }
+        
+        reuniaoRepository.delete(reuniao);
+    }
 }
