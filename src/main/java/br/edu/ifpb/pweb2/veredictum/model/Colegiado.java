@@ -4,9 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -15,7 +13,7 @@ import java.util.stream.Collectors;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = {"membros", "reunioes"})
+@ToString(exclude = {"membros"})
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
 public class Colegiado {
     @Id 
@@ -30,9 +28,6 @@ public class Colegiado {
 
     @ManyToMany(mappedBy = "colegiados", fetch = FetchType.EAGER)
     private Set<Professor> membros = new HashSet<>();
-
-    @OneToMany(mappedBy = "colegiado")
-    private List<Reuniao> reunioes = new ArrayList<>();
 
     // Método auxiliar para obter IDs dos membros como String separada por vírgula
     public String getMembrosIdsAsString() {

@@ -6,5 +6,6 @@ public enum StatusProcessoEnum {
     DISPONIVEL,
     EM_PAUTA,
     EM_JULGAMENTO,
-    JULGADO
+    JULGADO,
+    COM_PARECER
 }

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
+<div th:fragment="lista-membros" style="max-height: 200px; overflow-y: auto;">
+    <div th:if="${professores.isEmpty()}" class="text-warning">
+        <i class="bi bi-exclamation-triangle"></i> Nenhum professor encontrado neste colegiado
+    </div>
+    <div th:each="prof : ${professores}" class="form-check">
+        <input class="form-check-input" type="checkbox" 
+               th:id="'prof_' + ${prof.id}" 
+               name="professoresIds" 
+               th:value="${prof.id}"
+               th:checked="${prof.ehCoordenador}"
+               th:disabled="${prof.ehCoordenador}">
+        <label class="form-check-label" th:for="'prof_' + ${prof.id}">
+            <span th:text="${prof.nome}">Nome do Professor</span>
+            <span th:if="${prof.ehCoordenador}" class="badge bg-primary text-white ms-2">Coordenador</span>
+        </label>
+    </div>
+</div>
+
+<div th:fragment="erro" class="text-danger">
+    <i class="bi bi-exclamation-triangle"></i> <span th:text="${error}">Erro ao carregar professores</span>
+</div>
+
+</body>
+</html>
