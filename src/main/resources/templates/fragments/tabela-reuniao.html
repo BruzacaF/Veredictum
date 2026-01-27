@@ -49,10 +49,13 @@
                         </td>
 
                         <td class="text-center">
-                            <a th:href="@{/reunioes/{id}(id=${reuniao.id})}"
-                               class="btn btn-sm btn-outline-primary px-3">
-                                Detalhes
-                            </a>
+                            <button
+                                    class="btn btn-outline-primary btn-detalhes-reuniao"
+                                    th:attr="data-id=${reuniao.id}">
+                                <i class="bi bi-eye"></i> Detalhes
+                            </button>
+
+
 
                             <a th:if="${reuniao.status == T(br.edu.ifpb.pweb2.veredictum.enums.StatusReuniao).ENCERRADA}"
                                th:href="@{/reunioes/{id}/ata(id=${reuniao.id})}"
@@ -68,5 +71,33 @@
 
         </div>
     </div>
+
+
+    <div class="modal fade" id="modalReuniao" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content shadow">
+
+                <div class="modal-header">
+                    <h5 class="modal-title fw-semibold">
+                        <i class="bi bi-calendar-event me-1"></i>
+                        Detalhes da Reunião
+                    </h5>
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body" id="modalReuniaoBody">
+                    <div class="text-center text-muted py-5">
+                        <div class="spinner-border"></div>
+                        <div class="mt-2">Carregando informações…</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
 
 </div>

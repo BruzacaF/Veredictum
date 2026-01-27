@@ -54,6 +54,7 @@ public class ProcessoController {
             return "redirect:/home/aluno";
         };
 
+    //UPLOAD DE ARQUIVOS PARA PROCESSO ALUNO
     @PostMapping("/{id}/arquivo")
     public String uploadArquivo(@PathVariable Long id,
                                 @RequestParam("arquivo") MultipartFile arquivo,
@@ -109,14 +110,20 @@ public class ProcessoController {
 
 
     @GetMapping("/{id}/modal")
-    public String detalhesModal(@PathVariable Long id, Model model) {
+    public String detalhesModal(@PathVariable Long id, Model model, @AuthenticationPrincipal UsuarioDetails usuario) {
 
         Processo processo = processoService.buscarPorId(id);
 
         int totalDocumentos = processo.getDocumentos().size();
         int limite = 3;
 
+        boolean isAluno = usuario.getAuthorities()
+                .stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ALUNO"));
+
+
         boolean podeEnviarDocumento =
+                isAluno &&
                 processo.getStatus() == StatusProcessoEnum.CRIADO &&
                         totalDocumentos < limite;
 

@@ -1,53 +1,73 @@
 <th:block th:fragment="painel-reuniao">
 
-    <section class="card p-3">
+    <section class="card border-0 shadow-sm">
 
         <!-- HEADER -->
-        <header class="mb-3">
-            <h5 class="mb-0">Reuniões</h5>
+        <header class="card-header bg-white border-bottom d-flex align-items-center gap-2">
+            <i class="bi bi-calendar-event text-primary fs-5"></i>
+            <h6 class="mb-0 fw-semibold">
+                Reuniões do Colegiado
+            </h6>
         </header>
 
-        <!-- FILTROS -->
-        <form class="row g-3 mb-3" method="get" formReunioes>
+        <div class="card-body">
 
-            <div class="col-md-4">
-                <label class="form-label">Filtrar por Status</label>
-                <select class="form-select" name="status">
-                    <option value="">Todos</option>
-                    <option th:each="st : ${status}"
-                            th:value="${st}"
-                            th:text="${st}"
-                            th:selected="${st == statusFiltro}">
-                    </option>
-                </select>
+            <!-- FILTROS -->
+            <form class="row g-3 mb-4"
+                  method="get"
+                  formReunioes>
+
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">
+                        Status da reunião
+                    </label>
+                    <select class="form-select form-select-sm"
+                            name="status">
+                        <option value="">Todos</option>
+                        <option th:each="st : ${status}"
+                                th:value="${st}"
+                                th:text="${st}"
+                                th:selected="${st == statusFiltro}">
+                        </option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">
+                        Data
+                    </label>
+                    <input type="date"
+                           class="form-control form-control-sm"
+                           name="data"
+                           th:value="${dataFiltro}">
+                </div>
+
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-outline-secondary btn-sm w-100">
+                        <i class="bi bi-funnel me-1"></i>
+                        Filtrar
+                    </button>
+                </div>
+
+            </form>
+
+            <!-- TABELA -->
+            <div th:if="${not #lists.isEmpty(reunioes)}">
+                <div th:replace="~{fragments/tabela-reuniao :: tabela-reuniao(${reunioes}, ${statusReuniao})}">
+                </div>
             </div>
 
-            <div class="col-md-4">
-                <label class="form-label">Filtrar por Data</label>
-                <input type="date"
-                       class="form-control"
-                       name="data"
-                       th:value="${dataFiltro}">
+            <!-- EMPTY STATE -->
+            <div th:if="${#lists.isEmpty(reunioes)}"
+                 class="text-center text-muted py-5">
+
+                <i class="bi bi-calendar-x fs-2 d-block mb-2"></i>
+                <span class="small">
+                    Nenhuma reunião encontrada com os filtros aplicados.
+                </span>
+
             </div>
 
-            <div class="col-md-2 d-flex align-items-end">
-                <button class="btn btn-secondary w-100">
-                    Filtrar
-                </button>
-            </div>
-
-        </form>
-
-        <!-- TABELA -->
-        <div th:if="${not #lists.isEmpty(reunioes)}">
-            <div th:replace="~{fragments/tabela-reuniao :: tabela-reuniao(${reunioes}, ${statusReuniao})}">
-            </div>
-        </div>
-
-        <!-- EMPTY STATE -->
-        <div class="text-muted text-center py-4"
-             th:if="${#lists.isEmpty(reunioes)}">
-            Nenhuma reunião encontrada com os filtros aplicados.
         </div>
 
     </section>

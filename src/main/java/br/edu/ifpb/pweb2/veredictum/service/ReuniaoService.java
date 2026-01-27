@@ -24,4 +24,9 @@ public class ReuniaoService {
         return reuniaoRepository.buscarReunioesProfessor(professor, statusReuniao, data);
     }
 
+    public Reuniao buscarPorIdComPauta(Long id) {
+        return reuniaoRepository.buscarDetalhes(id);
+
+    }
+
 }

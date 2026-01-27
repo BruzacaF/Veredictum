@@ -1,0 +1,66 @@
+<th:block th:fragment="conteudo">
+
+    <!-- INFORMAÇÕES GERAIS -->
+    <div class="card mb-3 shadow-sm">
+        <div class="card-body">
+
+            <h6 class="fw-semibold mb-3">
+                <i class="bi bi-info-circle me-1"></i>
+                Informações gerais
+            </h6>
+
+            <dl class="row mb-0">
+                <dt class="col-sm-4 text-muted">Data</dt>
+                <dd class="col-sm-8 fw-semibold"
+                    th:text="${#temporals.format(reuniao.data, 'dd/MM/yyyy HH:mm')}"></dd>
+
+                <dt class="col-sm-4 text-muted">Status</dt>
+                <dd class="col-sm-8">
+                    <span class="badge bg-secondary"
+                          th:text="${reuniao.status}"></span>
+                </dd>
+
+                <dt class="col-sm-4 text-muted">Colegiado</dt>
+                <dd class="col-sm-8"
+                    th:text="${reuniao.colegiado.descricao}"></dd>
+            </dl>
+
+        </div>
+    </div>
+
+    <!-- PROCESSOS -->
+    <div class="card mb-3 shadow-sm"
+         th:if="${!reuniao.pauta.isEmpty()}">
+
+        <div class="card-body">
+
+            <h6 class="fw-semibold mb-3">
+                <i class="bi bi-folder2-open me-1"></i>
+                Processos em pauta
+            </h6>
+
+            <ul class="list-group list-group-flush">
+                <li class="list-group-item"
+                    th:each="p : ${reuniao.pauta}">
+                    <strong th:text="${p.numero}"></strong>
+                    <div class="small text-muted"
+                         th:text="${p.assunto.nome}"></div>
+                </li>
+            </ul>
+
+        </div>
+    </div>
+
+    <!-- ATA -->
+    <div class="card shadow-sm" th:if="${reuniao.ata != null}">
+        <div class="card-body">
+            <a class="btn btn-outline-success btn-sm"
+               th:href="@{/reuniao/{id}/ata(id=${reuniao.id})}"
+               target="_blank">
+                <i class="bi bi-eye-fill me-1"></i>
+                Visualizar ata
+            </a>
+        </div>
+    </div>
+
+</th:block>

@@ -1,5 +1,6 @@
 package br.edu.ifpb.pweb2.veredictum.config;
 
+import br.edu.ifpb.pweb2.veredictum.security.CustomAuthenticationFailureHandler;
 import br.edu.ifpb.pweb2.veredictum.security.CustomAuthenticationSuccessHandler;
 import br.edu.ifpb.pweb2.veredictum.service.UsuarioDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +21,9 @@ public class SecurityConfig {
 
     @Autowired
     private UsuarioDetailsService usuarioDetailsService;
+
+    @Autowired
+    private CustomAuthenticationFailureHandler failureHandler;
 
     @Autowired
     private CustomAuthenticationSuccessHandler successHandler;
@@ -57,6 +61,7 @@ public class SecurityConfig {
                 .formLogin(form -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
+                        .failureHandler(failureHandler)
                         .successHandler(successHandler)
                         .permitAll()
                 )

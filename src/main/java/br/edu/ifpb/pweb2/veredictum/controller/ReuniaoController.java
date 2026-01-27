@@ -11,6 +11,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -45,6 +46,17 @@ class ReuniaoController {
 
         return "fragments/painel-reuniao :: painel-reuniao";
     }
+
+    @GetMapping("/{id}/modal")
+    public String detalhesModal(@PathVariable Long id, Model model) {
+
+        Reuniao reuniao = reuniaoService.buscarPorIdComPauta(id);
+        model.addAttribute("reuniao", reuniao);
+
+        return "fragments/modal-reuniao :: conteudo";
+    }
+
+
 
 
 
