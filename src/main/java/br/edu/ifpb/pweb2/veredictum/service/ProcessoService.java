@@ -166,4 +166,9 @@ public class ProcessoService {
                 List.of(StatusProcessoEnum.DISTRIBUIDO, StatusProcessoEnum.COM_PARECER)
         );
     }
+    public Page<Processo> buscarPorRelatorPaginado(Professor professor, Pageable pageable) {
+        ProcessoDTOFiltro filtro = new ProcessoDTOFiltro();
+        return processoRepository.filtrar(filtro, professor.getId(), RoleEnum.PROFESSOR, pageable);
+    }
+
 }
