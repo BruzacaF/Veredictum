@@ -103,83 +103,118 @@
     </script>
 
     <script>
-        async function carregarTabelaComFiltros(paramsObject) {
-            const params = new URLSearchParams(paramsObject).toString();
-            try {
-                const resp = await fetch('/processo/listar?' + params, {
-                    headers: { 'X-Requested-With': 'XMLHttpRequest' }
-                });
-                if (!resp.ok) return;
-                document.getElementById('tabela-container').innerHTML = await resp.text();
-            } catch (e) {
-                console.error(e);
+        document.addEventListener("DOMContentLoaded", () => {
+
+            // =========================
+            // Função para carregar tabela
+            // =========================
+            async function carregarTabelaComFiltros(paramsObject) {
+                const params = new URLSearchParams(paramsObject).toString();
+
+                try {
+                    const resp = await fetch('/processo/listar?' + params, {
+                        method: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+
+                    if (!resp.ok) {
+                        console.error('Resposta não OK:', resp.status, await resp.text());
+                        return;
+                    }
+
+                    const html = await resp.text();
+                    document.getElementById('tabela-container').innerHTML = html;
+                } catch (err) {
+                    console.error('Erro ao carregar tabela via AJAX:', err);
+                }
             }
-        }
 
-        document.getElementById('btnFiltrar')?.addEventListener('click', () => {
-            carregarTabelaComFiltros({
-                assunto: document.getElementById('filtroAssunto').value || '',
-                status: document.getElementById('filtroStatus').value || '',
-                ordenacao: document.getElementById('filtroOrdenacao').value
+            // =========================
+            // Paginação (delegação de evento)
+            // =========================
+            document.addEventListener("click", function(e) {
+                const btnPage = e.target.closest(".page-link");
+                if (!btnPage) return;
+
+                const page = btnPage.getAttribute("data-page");
+                if (page === null) return;
+
+                // mantém os filtros atuais
+                const assunto = document.getElementById('filtroAssunto')?.value || '';
+                const status = document.getElementById('filtroStatus')?.value || '';
+                const ordenacao = document.getElementById('filtroOrdenacao')?.value || 'DESC';
+
+                carregarTabelaComFiltros({ assunto, status, ordenacao, page });
             });
-        });
 
-            document.addEventListener("DOMContentLoaded", () => {
+            // =========================
+            // Botão Filtrar
+            // =========================
+            document.getElementById('btnFiltrar')?.addEventListener('click', () => {
+                carregarTabelaComFiltros({
+                    assunto: document.getElementById('filtroAssunto')?.value || '',
+                    status: document.getElementById('filtroStatus')?.value || '',
+                    ordenacao: document.getElementById('filtroOrdenacao')?.value || 'DESC',
+                    page: 0
+                });
+            });
 
+            // =========================
+            // Modal Detalhes do Processo
+            // =========================
             const modalEl = document.getElementById("modalProcesso");
             const modalBody = document.getElementById("modalProcessoBody");
             const modal = new bootstrap.Modal(modalEl);
 
-            // Delegação de evento para botões gerados dinamicamente
             document.addEventListener("click", async (event) => {
+                const btn = event.target.closest(".btn-detalhes");
+                if (!btn) return;
 
-            const btn = event.target.closest(".btn-detalhes");
-            if (!btn) return;
+                event.preventDefault();
 
-            event.preventDefault();
+                const id = btn.dataset.id;
+                if (!id) return;
 
-            const id = btn.dataset.id;
-            if (!id) return;
-
-            // Feedback imediato
-            modalBody.innerHTML = `
+                // Feedback imediato
+                modalBody.innerHTML = `
                 <div class="text-center text-muted py-5">
                     <div class="spinner-border mb-2" role="status"></div>
                     <div>Carregando detalhes do processo...</div>
                 </div>
             `;
 
-            modal.show();
+                modal.show();
 
-            try {
-            const resp = await fetch(`/processo/${id}/modal`, {
-            headers: {
-            'X-Requested-With': 'XMLHttpRequest'
-        }
-        });
+                try {
+                    const resp = await fetch(`/processo/${id}/modal`, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
 
-            if (!resp.ok) {
-            throw new Error("Erro ao carregar modal");
-        }
+                    if (!resp.ok) {
+                        throw new Error("Erro ao carregar modal");
+                    }
 
-            const html = await resp.text();
-            modalBody.innerHTML = html;
+                    const html = await resp.text();
+                    modalBody.innerHTML = html;
 
-        } catch (e) {
-            console.error(e);
-            modalBody.innerHTML = `
+                } catch (e) {
+                    console.error(e);
+                    modalBody.innerHTML = `
                     <div class="alert alert-danger small text-center">
                         <i class="bi bi-exclamation-triangle me-1"></i>
                         Não foi possível carregar os dados do processo.
                     </div>
                 `;
-        }
+                }
+            });
+
         });
-        });
-
-
-
     </script>
+
 
 </th:block>
 

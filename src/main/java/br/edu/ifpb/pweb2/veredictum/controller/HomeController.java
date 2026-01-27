@@ -10,6 +10,9 @@ import br.edu.ifpb.pweb2.veredictum.security.UsuarioDetails;
 import br.edu.ifpb.pweb2.veredictum.service.ProcessoService;
 import br.edu.ifpb.pweb2.veredictum.service.ReuniaoService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -32,11 +35,20 @@ public class HomeController {
     @GetMapping("/aluno")
     public String home(Model model, @AuthenticationPrincipal UsuarioDetails usuario) {
 
-        List<Processo> processos = processoService.buscarPorAluno((Aluno) usuario.getUsuario());
-        model.addAttribute("itensTabela", processos);
+        Pageable pageable = PageRequest.of(0, 5);
+
+        Page<Processo> processosPage = processoService.buscarPorAlunoPaginado(
+                (Aluno) usuario.getUsuario(),
+                pageable
+        );
+
+        model.addAttribute("itensTabela", processosPage.getContent());
+        model.addAttribute("paginaAtual", processosPage.getNumber());
+        model.addAttribute("totalPaginas", processosPage.getTotalPages());
 
         return "aluno/dashboard";
     }
+
 
     @GetMapping("/professor")
     public String professor(Model model, @AuthenticationPrincipal UsuarioDetails usuario) {

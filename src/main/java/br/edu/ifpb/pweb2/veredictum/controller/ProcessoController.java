@@ -13,6 +13,9 @@ import br.edu.ifpb.pweb2.veredictum.security.UsuarioDetails;
 import br.edu.ifpb.pweb2.veredictum.service.ProcessoService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -20,8 +23,6 @@ import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import java.util.List;
 
 @Controller
 @RequestMapping("/processo")
@@ -81,6 +82,7 @@ public class ProcessoController {
             @RequestParam(required = false) String assunto,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "DESC") String ordenacao,
+            @RequestParam(defaultValue = "0") int page,  // <-- novo
             @AuthenticationPrincipal UsuarioDetails usuarioDetails,
             @RequestHeader(value = "X-Requested-With", required = false) String requestedWith,
             Model model
@@ -93,13 +95,18 @@ public class ProcessoController {
 
         Usuario usuario = usuarioDetails.getUsuario();
 
-        List<Processo> processos = processoRepository.filtrar(
+        Pageable pageable = PageRequest.of(page, 5);
+
+        Page<Processo> processos = processoRepository.filtrar(
                 filtro,
                 usuario.getId(),
-                usuario.getRole()
+                usuario.getRole(),
+                pageable
         );
 
-        model.addAttribute("itensTabela", processos);
+        model.addAttribute("itensTabela", processos.getContent());
+        model.addAttribute("paginaAtual", processos.getNumber());
+        model.addAttribute("totalPaginas", processos.getTotalPages());
 
         if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
             return "fragments/tabela-processo-aluno :: tabela-processo";
@@ -107,6 +114,8 @@ public class ProcessoController {
 
         return "processo/listar";
     }
+
+
 
 
     @GetMapping("/{id}/modal")

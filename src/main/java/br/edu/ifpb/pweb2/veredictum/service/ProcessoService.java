@@ -2,6 +2,7 @@ package br.edu.ifpb.pweb2.veredictum.service;
 
 import br.edu.ifpb.pweb2.veredictum.dto.ProcessoDTO;
 import br.edu.ifpb.pweb2.veredictum.dto.ProcessoDTOFiltro;
+import br.edu.ifpb.pweb2.veredictum.enums.RoleEnum;
 import br.edu.ifpb.pweb2.veredictum.enums.StatusProcessoEnum;
 import br.edu.ifpb.pweb2.veredictum.model.*;
 import br.edu.ifpb.pweb2.veredictum.repository.DocumentoRepository;
@@ -9,6 +10,8 @@ import br.edu.ifpb.pweb2.veredictum.repository.ProcessoRepository;
 import br.edu.ifpb.pweb2.veredictum.repository.ProfessorRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -150,4 +153,10 @@ public class ProcessoService {
     public boolean processoTemDocumento(Long processoId){
         return documentoRepository.existsById(processoId);
     }
+
+    public Page<Processo> buscarPorAlunoPaginado(Aluno aluno, Pageable pageable) {
+        ProcessoDTOFiltro filtro = new ProcessoDTOFiltro();
+        return processoRepository.filtrar(filtro, aluno.getId(), RoleEnum.ALUNO, pageable);
+    }
+
 }
