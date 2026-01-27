@@ -13,7 +13,7 @@ import java.util.Set;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = {"colegiados", "processosRelatados"}, callSuper = true)
+@ToString(exclude = {"colegiados", "processosRelatados", "reunioesCoordenadas", "reunioesParticipadas"}, callSuper = true)
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 public class Professor extends Usuario {
     
@@ -32,4 +32,10 @@ public class Professor extends Usuario {
 
     @OneToMany(mappedBy = "relator")
     private List<Processo> processosRelatados = new ArrayList<>();
+
+    @OneToMany(mappedBy = "coordenador")
+    private List<Reuniao> reunioesCoordenadas = new ArrayList<>();
+
+    @ManyToMany(mappedBy = "membros")
+    private Set<Reuniao> reunioesParticipadas = new HashSet<>();
 }

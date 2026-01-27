@@ -159,4 +159,11 @@ public class ProcessoService {
         return processoRepository.filtrar(filtro, aluno.getId(), RoleEnum.ALUNO, pageable);
     }
 
+    @Transactional(readOnly = true)
+    public List<Processo> listarProcessosDisponiveisParaPauta(Long colegiadoId) {
+        return processoRepository.findByColegiadoIdAndStatusIn(
+                colegiadoId,
+                List.of(StatusProcessoEnum.DISTRIBUIDO, StatusProcessoEnum.COM_PARECER)
+        );
+    }
 }

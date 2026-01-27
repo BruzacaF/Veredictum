@@ -139,28 +139,33 @@ public class DataInitializer {
             processoRepository.save(p2);
             processoRepository.save(p3);
 
+            // ---------------------------
+            // Criar Reuniões
+            // ---------------------------
+            
             // Reunião PROGRAMADA
             Reuniao r1 = new Reuniao();
             r1.setData(LocalDateTime.now().plusDays(3));
             r1.setStatus(StatusReuniao.PROGRAMADA);
-            r1.setColegiado(colegiado);
+            r1.setCoordenador(coordenador);
+            r1.getMembros().add(professor);
             r1.getPauta().add(p1);
             r1.getPauta().add(p2);
 
-// Reunião EM ANDAMENTO
+            // Reunião EM_ANDAMENTO (ajustado de EM ANDAMENTO)
             Reuniao r2 = new Reuniao();
             r2.setData(LocalDateTime.now().minusHours(1));
-            r2.setStatus(StatusReuniao.EM_ANDAMENTO);
-            r2.setColegiado(colegiado);
+            r2.setStatus(StatusReuniao.PROGRAMADA); // StatusReuniao não tem EM_ANDAMENTO, usar PROGRAMADA
+            r2.setCoordenador(coordenador);
+            r2.getMembros().add(professor);
             r2.getPauta().add(p3);
 
-// Reunião ENCERRADA
+            // Reunião REALIZADA (ajustado de ENCERRADA)
             Reuniao r3 = new Reuniao();
             r3.setData(LocalDateTime.now().minusDays(7));
-            r3.setStatus(StatusReuniao.ENCERRADA);
-            r3.setColegiado(colegiado);
-            r3.getPauta().add(p1);
-            r3.getPauta().add(p3);
+            r3.setStatus(StatusReuniao.REALIZADA);
+            r3.setCoordenador(coordenador);
+            r3.getMembros().add(professor);
 
             reuniaoRepository.saveAll(List.of(r1, r2, r3));
 

@@ -22,8 +22,17 @@ public class Reuniao {
     @Lob
     private byte[] ata;
 
-    @ManyToOne
-    private Colegiado colegiado;
+    @ManyToOne(optional = false)
+    @JoinColumn(name = "coordenador_id", nullable = false)
+    private Professor coordenador;
+
+    @ManyToMany
+    @JoinTable(
+            name = "reuniao_membros",
+            joinColumns = @JoinColumn(name = "reuniao_id"),
+            inverseJoinColumns = @JoinColumn(name = "professor_id")
+    )
+    private Set<Professor> membros = new HashSet<>();
 
     @ManyToMany
     @JoinTable(name = "reuniao_processo",
