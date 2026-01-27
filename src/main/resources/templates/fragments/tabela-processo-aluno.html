@@ -43,10 +43,14 @@
                         <td th:text="${#temporals.format(proc.dataCriacao, 'dd/MM/yyyy')}">Data</td>
 
                         <td class="text-center">
-                            <a th:href="@{/processo/detalhes/{id}(id=${proc.id})}"
-                               class="btn btn-sm btn-outline-primary px-3">
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-primary px-3 btn-detalhes"
+                                    th:data-id="${proc.id}"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#modalProcesso">
                                 Detalhes
-                            </a>
+                            </button>
+
                         </td>
                     </tr>
                     </tbody>
@@ -56,5 +60,24 @@
 
         </div>
     </div>
+
+    <div class="modal fade" id="modalProcesso" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalhes do Processo</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body" id="modalProcessoBody">
+
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+
 
 </div>

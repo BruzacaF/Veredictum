@@ -19,14 +19,14 @@ public class Documento {
     private String tipoArquivo;
     
     private Long tamanho;
-    
-    @Lob
+
+    @Column(columnDefinition = "bytea")
     private byte[] conteudo;
-    
+
     private LocalDateTime dataUpload;
-    
-    @ManyToOne
-    @JoinColumn(name = "processo_id")
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "processo_id", nullable = false)
     private Processo processo;
     
     @ManyToOne

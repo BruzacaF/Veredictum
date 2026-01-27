@@ -2,6 +2,7 @@ package br.edu.ifpb.pweb2.veredictum.controller;
 
 import br.edu.ifpb.pweb2.veredictum.dto.ProcessoDTO;
 import br.edu.ifpb.pweb2.veredictum.dto.ProcessoDTOFiltro;
+import br.edu.ifpb.pweb2.veredictum.enums.StatusProcessoEnum;
 import br.edu.ifpb.pweb2.veredictum.model.Aluno;
 import br.edu.ifpb.pweb2.veredictum.model.Processo;
 import br.edu.ifpb.pweb2.veredictum.model.Professor;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.List;
@@ -52,6 +54,27 @@ public class ProcessoController {
             return "redirect:/home/aluno";
         };
 
+    @PostMapping("/{id}/arquivo")
+    public String uploadArquivo(@PathVariable Long id,
+                                @RequestParam("arquivo") MultipartFile arquivo,
+                                RedirectAttributes redirectAttributes,
+                                @AuthenticationPrincipal UsuarioDetails usuario) throws Exception {
+
+        if (arquivo.isEmpty()) {
+            redirectAttributes.addFlashAttribute("erro",
+                    "Nenhum arquivo foi selecionado.");
+            return "redirect:/home/aluno";
+        }
+
+        processoService.anexarArquivo(id, arquivo, usuario.getUsuario());
+
+        redirectAttributes.addFlashAttribute("sucesso",
+                "Arquivo enviado com sucesso.");
+
+        return "redirect:/home/aluno";
+    }
+
+
     @GetMapping("/listar")
     public String listar(
             @RequestParam(required = false) String assunto,
@@ -82,6 +105,27 @@ public class ProcessoController {
         }
 
         return "processo/listar";
+    }
+
+
+    @GetMapping("/{id}/modal")
+    public String detalhesModal(@PathVariable Long id, Model model) {
+
+        Processo processo = processoService.buscarPorId(id);
+
+        int totalDocumentos = processo.getDocumentos().size();
+        int limite = 3;
+
+        boolean podeEnviarDocumento =
+                processo.getStatus() == StatusProcessoEnum.CRIADO &&
+                        totalDocumentos < limite;
+
+        model.addAttribute("processo", processo);
+        model.addAttribute("totalDocumentos", totalDocumentos);
+        model.addAttribute("limiteDocumentos", limite);
+        model.addAttribute("podeEnviarDocumento", podeEnviarDocumento);
+
+        return "fragments/modal-processo :: conteudo";
     }
 
 

@@ -137,6 +137,48 @@
         });
     });
 
+    // MODAL SCRIPT
+    document.addEventListener("DOMContentLoaded", () => {
+
+        const modalEl = document.getElementById("modalProcesso");
+        const modalBody = document.getElementById("modalProcessoBody");
+        const modal = new bootstrap.Modal(modalEl);
+
+        document.addEventListener("click", event => {
+
+            const btn = event.target.closest(".btn-detalhes");
+            if (!btn) return;
+
+            event.preventDefault();
+
+            const id = btn.dataset.id;
+
+            modalBody.innerHTML = `
+            <div class="text-center text-muted py-5">
+                Carregando detalhes...
+            </div>
+        `;
+
+            modal.show();
+
+            fetch(`/processo/${id}/modal`)
+                .then(res => {
+                    if (!res.ok) throw new Error();
+                    return res.text();
+                })
+                .then(html => {
+                    modalBody.innerHTML = html;
+                })
+                .catch(() => {
+                    modalBody.innerHTML = `
+                    <div class="alert alert-danger">
+                        Erro ao carregar os dados do processo.
+                    </div>
+                `;
+                });
+        });
+    });
+
 </script>
 
 
