@@ -12,7 +12,10 @@ import br.edu.ifpb.pweb2.veredictum.security.UsuarioDetails;
 import br.edu.ifpb.pweb2.veredictum.service.ProcessoService;
 import br.edu.ifpb.pweb2.veredictum.service.ProfessorService;
 import br.edu.ifpb.pweb2.veredictum.service.ReuniaoService;
+import br.edu.ifpb.pweb2.veredictum.service.ColegiadoService;
+import br.edu.ifpb.pweb2.veredictum.model.Colegiado;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
@@ -44,6 +47,9 @@ public class CoordenadorController {
 
     @Autowired
     private ReuniaoService reuniaoService;
+
+    @Autowired
+    private ColegiadoService colegiadoService;
 
     @GetMapping("/processos")
     @Transactional(readOnly = true)
@@ -122,21 +128,41 @@ public class CoordenadorController {
                 .count();
 
         List<Processo> processosDisponiveis = processoService.listarProcessosDisponiveisParaPauta(colegiadoId);
+        List<Colegiado> colegiados = colegiadoService.listarTodos();
 
         model.addAttribute("sessoes", sessoes);
         model.addAttribute("totalProgramadas", totalProgramadas);
         model.addAttribute("totalRealizadas", totalRealizadas);
         model.addAttribute("totalCanceladas", totalCanceladas);
         model.addAttribute("processosDisponiveis", processosDisponiveis);
-        model.addAttribute("professores", professorService.buscarPorColegiadoId(colegiadoId));
+        model.addAttribute("colegiados", colegiados);
         model.addAttribute("usuario", coordenador);
 
         return "coordenador/sessoes";
     }
 
+    @GetMapping("/api/colegiado/{id}/professores")
+    @Transactional(readOnly = true)
+    public String buscarProfessoresColegiado(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UsuarioDetails usuarioDetails,
+            Model model
+    ) {
+        try {
+            obterCoordenador(usuarioDetails);
+            List<Professor> professores = professorService.buscarPorColegiadoId(id);
+            model.addAttribute("professores", professores);
+            return "fragments/membros-colegiado :: lista-membros";
+        } catch (RuntimeException e) {
+            model.addAttribute("error", e.getMessage());
+            return "fragments/membros-colegiado :: erro";
+        }
+    }
+
     @PostMapping("/sessao/criar")
     @Transactional
     public String criarSessao(
+            @RequestParam Long colegiadoId,
             @RequestParam String data,
             @RequestParam String hora,
             @RequestParam(required = false) List<Long> processosIds,
@@ -146,7 +172,6 @@ public class CoordenadorController {
     ) {
         try {
             Professor coordenador = obterCoordenador(usuarioDetails);
-            Long colegiadoId = obterColegiadoId(coordenador);
 
             LocalDateTime dataHora = LocalDateTime.of(
                     LocalDate.parse(data),

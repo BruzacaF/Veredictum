@@ -64,12 +64,15 @@ public class ReuniaoService {
         reuniao.setPauta(new HashSet<>());
         reuniao.setMembros(new HashSet<>());
 
-        // Adicionar membros não coordenadores
+        // Adicionar coordenador automaticamente aos membros
+        reuniao.getMembros().add(coordenador);
+
+        // Adicionar outros membros selecionados
         if (professoresIds != null && !professoresIds.isEmpty()) {
             Set<Professor> membros = colegiado.getMembros().stream()
-                    .filter(p -> professoresIds.contains(p.getId()) && !p.isEhCoordenador())
+                    .filter(p -> professoresIds.contains(p.getId()))
                     .collect(java.util.stream.Collectors.toSet());
-            reuniao.setMembros(membros);
+            reuniao.getMembros().addAll(membros);
         }
 
         if (processosIds != null && !processosIds.isEmpty()) {
