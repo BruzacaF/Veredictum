@@ -51,13 +51,24 @@ public class HomeController {
 
 
     @GetMapping("/professor")
-    public String professor(Model model, @AuthenticationPrincipal UsuarioDetails usuario) {
+    public String professor(Model model,
+                            @AuthenticationPrincipal UsuarioDetails usuario) {
 
-        List<Processo> processos = processoService.buscarPorProfessorRelator((Professor) usuario.getUsuario());
+
+        Pageable pageable = PageRequest.of(0, 5);
+
+        Page<Processo> processosPage = processoService.buscarPorRelatorPaginado(
+                (Professor) usuario.getUsuario(),
+                pageable
+        );
+
         List<Reuniao>  reuniaoList = reuniaoService.buscarPorProfessor((Professor) usuario.getUsuario());
-        model.addAttribute("itensTabela", processos);
+        model.addAttribute("itensTabela", processosPage.getContent());
         model.addAttribute("reunioes", reuniaoList);
         model.addAttribute("status", StatusReuniao.values());
+        model.addAttribute("paginaAtual", processosPage.getNumber());
+        model.addAttribute("totalPaginas", processosPage.getTotalPages());
+
         return "professor/dashboard";
     }
 

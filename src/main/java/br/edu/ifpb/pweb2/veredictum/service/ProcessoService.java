@@ -159,4 +159,9 @@ public class ProcessoService {
         return processoRepository.filtrar(filtro, aluno.getId(), RoleEnum.ALUNO, pageable);
     }
 
+    public Page<Processo> buscarPorRelatorPaginado(Professor professor, Pageable pageable) {
+        ProcessoDTOFiltro filtro = new ProcessoDTOFiltro();
+        return processoRepository.filtrar(filtro, professor.getId(), RoleEnum.PROFESSOR, pageable);
+    }
+
 }
