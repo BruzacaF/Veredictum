@@ -85,8 +85,8 @@ public class DataInitializer {
 
             Professor coordenador = new Professor();
             coordenador.setNome("Prof. Coordenador");
-            coordenador.setEmail("coordenador@ifpb.edu.br");
-            coordenador.setSenha(encoder.encode("coordenador123"));
+            coordenador.setEmail("coordenador");
+            coordenador.setSenha(encoder.encode("123"));
             coordenador.setRole(RoleEnum.COORDENADOR);
             coordenador.setTelefone("83977777777");
             coordenador.setMatricula("SIAPE001");
@@ -95,8 +95,8 @@ public class DataInitializer {
 
             Professor professor = new Professor();
             professor.setNome("Prof. Membro");
-            professor.setEmail("professor@ifpb.edu.br");
-            professor.setSenha(encoder.encode("professor123"));
+            professor.setEmail("professor");
+            professor.setSenha(encoder.encode("123"));
             professor.setRole(RoleEnum.PROFESSOR);
             professor.setTelefone("83966666666");
             professor.setMatricula("SIAPE002");

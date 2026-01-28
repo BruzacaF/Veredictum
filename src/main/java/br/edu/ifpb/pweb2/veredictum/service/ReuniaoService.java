@@ -2,13 +2,8 @@ package br.edu.ifpb.pweb2.veredictum.service;
 
 import br.edu.ifpb.pweb2.veredictum.enums.StatusProcessoEnum;
 import br.edu.ifpb.pweb2.veredictum.enums.StatusReuniao;
-import br.edu.ifpb.pweb2.veredictum.enums.TipoDecisao;
 import br.edu.ifpb.pweb2.veredictum.model.*;
-import br.edu.ifpb.pweb2.veredictum.repository.ColegiadoRepository;
-import br.edu.ifpb.pweb2.veredictum.repository.ProcessoRepository;
-import br.edu.ifpb.pweb2.veredictum.repository.ReuniaoRepository;
-import br.edu.ifpb.pweb2.veredictum.repository.VotoRepository;
-import br.edu.ifpb.pweb2.veredictum.repository.ProfessorRepository;
+import br.edu.ifpb.pweb2.veredictum.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -220,5 +215,12 @@ public class ReuniaoService {
         voto.setProfessor(professor);
 
         votoRepository.save(voto);
+    }
+
+    public void encerrarSessao(Long reuniaoId) {
+
+        Reuniao reuniao = buscarPorId(reuniaoId);
+        reuniao.setStatus(StatusReuniao.ENCERRADA);
+        reuniaoRepository.save(reuniao);
     }
 }

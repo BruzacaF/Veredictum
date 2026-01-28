@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 
 @Service
@@ -170,5 +171,15 @@ public class ProcessoService {
         ProcessoDTOFiltro filtro = new ProcessoDTOFiltro();
         return processoRepository.filtrar(filtro, professor.getId(), RoleEnum.PROFESSOR, pageable);
     }
+
+    @Transactional
+    public void processoJulgado(Long processoId) {
+        Optional<Processo> processo = processoRepository.findById(processoId);
+        processo.ifPresent(value -> {
+            value.setStatus(StatusProcessoEnum.JULGADO);
+            processoRepository.save(value);
+        });
+    }
+
 
 }

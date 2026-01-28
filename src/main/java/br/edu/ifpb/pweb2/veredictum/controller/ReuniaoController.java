@@ -1,9 +1,11 @@
 package br.edu.ifpb.pweb2.veredictum.controller;
 
+import br.edu.ifpb.pweb2.veredictum.enums.RoleEnum;
 import br.edu.ifpb.pweb2.veredictum.enums.StatusReuniao;
-import br.edu.ifpb.pweb2.veredictum.model.Processo;
-import br.edu.ifpb.pweb2.veredictum.model.Professor;
-import br.edu.ifpb.pweb2.veredictum.model.Reuniao;
+import br.edu.ifpb.pweb2.veredictum.enums.TipoVoto;
+import br.edu.ifpb.pweb2.veredictum.model.*;
+import br.edu.ifpb.pweb2.veredictum.repository.ProcessoRepository;
+import br.edu.ifpb.pweb2.veredictum.repository.VotoRepository;
 import br.edu.ifpb.pweb2.veredictum.security.UsuarioDetails;
 import br.edu.ifpb.pweb2.veredictum.service.ReuniaoService;
 import org.slf4j.Logger;
@@ -14,26 +16,32 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/reuniao")
 class ReuniaoController {
+
+    @Autowired
+    private final ProcessoRepository  processoRepository;
+    @Autowired
+    private final VotoRepository votoRepository;
 
     private static final Logger logger = LoggerFactory.getLogger(ReuniaoController.class);
 
     @Autowired
     private final ReuniaoService reuniaoService;
 
-    ReuniaoController(ReuniaoService reuniaoService) {
+
+    ReuniaoController(ProcessoRepository processoRepository, VotoRepository votoRepository, ReuniaoService reuniaoService) {
+        this.processoRepository = processoRepository;
+        this.votoRepository = votoRepository;
         this.reuniaoService = reuniaoService;
     }
 
@@ -47,12 +55,12 @@ class ReuniaoController {
     ) {
         try {
             logger.info("Listando reuniões - Status: {}, Data: {}", status, data);
-            
+
             Professor professor = (Professor) usuario.getUsuario();
             List<Reuniao> reunioes = reuniaoService.buscarReuniosProfessorFiltro(professor, status, data);
-            
+
             logger.info("Encontradas {} reuniões", reunioes.size());
-            
+
             model.addAttribute("reunioes", reunioes);
             model.addAttribute("status", StatusReuniao.values());
             model.addAttribute("dataFiltro", data);
@@ -96,23 +104,23 @@ class ReuniaoController {
         try {
             Professor coordenador = (Professor) usuario.getUsuario();
             Reuniao sessao = reuniaoService.buscarPorId(id);
-            
+
             if (sessao == null) {
                 throw new RuntimeException("Sessão não encontrada");
             }
-            
+
             if (!sessao.getCoordenador().getId().equals(coordenador.getId())) {
                 throw new RuntimeException("Acesso negado. Apenas o coordenador responsável pode iniciar esta sessão.");
             }
-            
+
             if (sessao.getStatus() != StatusReuniao.PROGRAMADA) {
                 throw new RuntimeException("Apenas sessões programadas podem ser iniciadas.");
             }
-            
+
             reuniaoService.iniciarSessao(id);
             redirectAttributes.addFlashAttribute("success", "✅ Sessão iniciada com sucesso!");
             return "redirect:/coordenador/sessao/" + id;
-            
+
         } catch (IllegalStateException e) {
             redirectAttributes.addFlashAttribute("error", "⚠️ " + e.getMessage());
             return "redirect:/coordenador/sessoes";
@@ -131,28 +139,28 @@ class ReuniaoController {
     ) {
         try {
             logger.info("Visualizando detalhes da reunião: {}", id);
-            
+
             Professor professor = (Professor) usuario.getUsuario();
             Reuniao sessao = reuniaoService.buscarPorIdComPauta(id);
-            
+
             if (sessao == null) {
                 throw new RuntimeException("Reunião não encontrada");
             }
-            
+
             // Verificar se o professor faz parte desta reunião
             boolean fazParte = sessao.getMembros().stream()
                     .anyMatch(m -> m.getId().equals(professor.getId()));
-            
+
             if (!fazParte && !sessao.getCoordenador().getId().equals(professor.getId())) {
                 throw new RuntimeException("Você não tem acesso a esta reunião");
             }
-            
+
             model.addAttribute("sessao", sessao);
             model.addAttribute("usuario", professor);
             model.addAttribute("ehCoordenador", professor.isEhCoordenador());
-            
+
             return "coordenador/detalhes-sessao";
-            
+
         } catch (RuntimeException e) {
             logger.error("Erro ao visualizar reunião: {}", id, e);
             model.addAttribute("error", e.getMessage());
@@ -170,35 +178,35 @@ class ReuniaoController {
     ) {
         try {
             logger.info("Professor visualizando julgamento - Reunião: {}, Processo: {}", reuniaoId, processoId);
-            
+
             Professor professor = (Professor) usuario.getUsuario();
             Reuniao sessao = reuniaoService.buscarPorIdComPauta(reuniaoId);
-            
+
             if (sessao == null) {
                 throw new RuntimeException("Reunião não encontrada");
             }
-            
+
             // Verificar se o professor faz parte desta reunião
             boolean fazParte = sessao.getMembros().stream()
                     .anyMatch(m -> m.getId().equals(professor.getId()));
-            
+
             if (!fazParte && !sessao.getCoordenador().getId().equals(professor.getId())) {
                 throw new RuntimeException("Você não tem acesso a esta reunião");
             }
-            
+
             Processo processo = sessao.getPauta().stream()
                     .filter(p -> p.getId().equals(processoId))
                     .findFirst()
                     .orElseThrow(() -> new RuntimeException("Processo não encontrado na pauta desta reunião"));
-            
+
             model.addAttribute("sessao", sessao);
             model.addAttribute("processo", processo);
             model.addAttribute("usuario", professor);
-            model.addAttribute("ehCoordenador", professor.isEhCoordenador() && 
-                                                sessao.getCoordenador().getId().equals(professor.getId()));
-            
+            model.addAttribute("ehCoordenador", professor.isEhCoordenador() &&
+                    sessao.getCoordenador().getId().equals(professor.getId()));
+
             return "coordenador/julgamento-processo";
-            
+
         } catch (RuntimeException e) {
             logger.error("Erro ao visualizar julgamento: Reunião {}, Processo {}", reuniaoId, processoId, e);
             model.addAttribute("error", e.getMessage());
@@ -208,60 +216,34 @@ class ReuniaoController {
 
     @PostMapping("/{reuniaoId}/processo/{processoId}/votar")
     @Transactional
-    public String registrarVoto(
-            @PathVariable Long reuniaoId,
-            @PathVariable Long processoId,
-            @RequestParam String decisao,
-            @AuthenticationPrincipal UsuarioDetails usuario,
-            RedirectAttributes redirectAttributes
-    ) {
-        try {
-            logger.info("Registrando voto - Reunião: {}, Processo: {}, Decisão: {}", reuniaoId, processoId, decisao);
-            
-            Professor professor = (Professor) usuario.getUsuario();
-            Reuniao sessao = reuniaoService.buscarPorIdComPauta(reuniaoId);
-            
-            if (sessao == null) {
-                throw new RuntimeException("Reunião não encontrada");
-            }
-            
-            // Verificar se o professor faz parte desta reunião
-            boolean fazParte = sessao.getMembros().stream()
-                    .anyMatch(m -> m.getId().equals(professor.getId()));
-            
-            if (!fazParte && !sessao.getCoordenador().getId().equals(professor.getId())) {
-                throw new RuntimeException("Você não está autorizado a votar nesta reunião");
-            }
-            
-            // Validar se o processo está em julgamento
-            Processo processo = sessao.getPauta().stream()
-                    .filter(p -> p.getId().equals(processoId))
-                    .findFirst()
-                    .orElseThrow(() -> new RuntimeException("Processo não encontrado na pauta"));
-            
-            if (!processo.getStatus().name().equals("EM_JULGAMENTO")) {
-                throw new RuntimeException("Este processo não está em julgamento no momento");
-            }
-            
-            // Registrar voto
-            reuniaoService.registrarVoto(reuniaoId, processoId, professor.getId(), decisao);
-            
-            redirectAttributes.addFlashAttribute("success", "✅ Voto registrado com sucesso!");
-            
-            // Redirecionar para a página apropriada
-            boolean ehCoordenador = professor.isEhCoordenador() && 
-                                   sessao.getCoordenador().getId().equals(professor.getId());
-            
-            if (ehCoordenador) {
-                return "redirect:/coordenador/sessao/" + reuniaoId + "/processo/" + processoId + "/julgamento";
-            } else {
-                return "redirect:/reuniao/" + reuniaoId + "/processo/" + processoId + "/visualizar";
-            }
-            
-        } catch (RuntimeException e) {
-            logger.error("Erro ao registrar voto: Reunião {}, Processo {}", reuniaoId, processoId, e);
-            redirectAttributes.addFlashAttribute("error", "❌ " + e.getMessage());
-            return "redirect:/home/professor";
+    public String registrarVoto(@PathVariable Long reuniaoId,
+                                @PathVariable Long processoId,
+                                @RequestParam String decisao,
+                                @AuthenticationPrincipal UsuarioDetails usuario,
+                                RedirectAttributes redirectAttributes) {
+
+        Optional<Processo> processoOpt = processoRepository.findById(processoId);
+        if (processoOpt.isPresent()) {
+            Processo processo = processoOpt.get();
+
+            Voto voto = new Voto();
+            voto.setProfessor((Professor) usuario.getUsuario());
+            voto.setProcesso(processo);
+            voto.setVoto(TipoVoto.valueOf(decisao)); // COM_RELATOR, DIVERGENTE ou AUSENTE
+            voto.setDataVoto(LocalDateTime.now());
+
+            votoRepository.save(voto);
+
+            redirectAttributes.addFlashAttribute("success", "Voto registrado com sucesso!");
+        } else {
+            redirectAttributes.addFlashAttribute("error", "Processo não encontrado.");
         }
+
+        if(usuario.getUsuario().getRole() != RoleEnum.COORDENADOR){
+            return "redirect:/home";
+        }
+
+        return "redirect:/coordenador/sessao/" + reuniaoId + "/processo/" + processoId + "/julgamento";
     }
+
 }

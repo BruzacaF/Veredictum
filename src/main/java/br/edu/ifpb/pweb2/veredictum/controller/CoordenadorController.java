@@ -1,21 +1,18 @@
 package br.edu.ifpb.pweb2.veredictum.controller;
 
 import br.edu.ifpb.pweb2.veredictum.dto.ProcessoDTOFiltro;
+import br.edu.ifpb.pweb2.veredictum.dto.VotoMembroDTO;
 import br.edu.ifpb.pweb2.veredictum.enums.StatusProcessoEnum;
 import br.edu.ifpb.pweb2.veredictum.enums.StatusReuniao;
-import br.edu.ifpb.pweb2.veredictum.model.Processo;
-import br.edu.ifpb.pweb2.veredictum.model.Professor;
-import br.edu.ifpb.pweb2.veredictum.model.Reuniao;
-import br.edu.ifpb.pweb2.veredictum.repository.AssuntoRepository;
-import br.edu.ifpb.pweb2.veredictum.repository.UsuarioRepository;
+import br.edu.ifpb.pweb2.veredictum.enums.TipoVoto;
+import br.edu.ifpb.pweb2.veredictum.model.*;
+import br.edu.ifpb.pweb2.veredictum.repository.*;
 import br.edu.ifpb.pweb2.veredictum.security.UsuarioDetails;
+import br.edu.ifpb.pweb2.veredictum.service.ColegiadoService;
 import br.edu.ifpb.pweb2.veredictum.service.ProcessoService;
 import br.edu.ifpb.pweb2.veredictum.service.ProfessorService;
 import br.edu.ifpb.pweb2.veredictum.service.ReuniaoService;
-import br.edu.ifpb.pweb2.veredictum.service.ColegiadoService;
-import br.edu.ifpb.pweb2.veredictum.model.Colegiado;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +25,7 @@ import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/coordenador")
@@ -35,6 +33,12 @@ public class CoordenadorController {
 
     @Autowired
     private ProcessoService processoService;
+
+    @Autowired
+    private ProcessoRepository processoRepository;
+
+    @Autowired
+    private VotoRepository votoRepository;
 
     @Autowired
     private AssuntoRepository assuntoRepository;
@@ -47,6 +51,9 @@ public class CoordenadorController {
 
     @Autowired
     private ReuniaoService reuniaoService;
+
+    @Autowired
+    private ReuniaoRepository reuniaoRepository;
 
     @Autowired
     private ColegiadoService colegiadoService;
@@ -307,40 +314,91 @@ public class CoordenadorController {
             return "redirect:/coordenador/sessao/" + reuniaoId + "/processo/" + processoId + "/julgamento";
             
         } catch (RuntimeException e) {
-            redirectAttributes.addFlashAttribute("error", "❌ " + e.getMessage());
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
             return "redirect:/coordenador/sessao/" + reuniaoId;
         }
     }
 
-    @GetMapping("/sessao/{reuniaoId}/processo/{processoId}/julgamento")
-    @Transactional(readOnly = true)
-    public String paginaJulgamento(
-            @PathVariable Long reuniaoId,
-            @PathVariable Long processoId,
-            @AuthenticationPrincipal UsuarioDetails usuarioDetails,
-            Model model
-    ) {
-        try {
-            Professor coordenador = obterCoordenador(usuarioDetails);
-            Reuniao sessao = reuniaoService.buscarPorIdComPauta(reuniaoId);
-            Processo processo = processoService.buscarPorId(processoId);
-            
-            if (!sessao.getCoordenador().getId().equals(coordenador.getId())) {
-                throw new RuntimeException("Acesso negado.");
-            }
-            
-            model.addAttribute("sessao", sessao);
-            model.addAttribute("processo", processo);
-            model.addAttribute("usuario", coordenador);
-            model.addAttribute("ehCoordenador", true);
-            
-            return "coordenador/julgamento-processo";
-            
-        } catch (RuntimeException e) {
-            model.addAttribute("error", e.getMessage());
-            return "redirect:/coordenador/sessao/" + reuniaoId;
+    @PostMapping("/coordenador/sessao/{sessaoId}/processo/{processoId}/concluir")
+    @Transactional
+    public String concluirJulgamento(@PathVariable Long sessaoId,
+                                     @PathVariable Long processoId,
+                                     RedirectAttributes redirectAttributes) {
+
+        Optional<Processo> processoOpt = processoRepository.findById(processoId);
+        if (processoOpt.isPresent()) {
+            Processo processo = processoOpt.get();
+
+            // Marcar membros sem voto como AUSENTE
+            reuniaoRepository.findById(sessaoId).ifPresent(sessao -> {
+                for (Usuario membro : sessao.getMembros()) {
+                    boolean jaVotou = processo.getVotos().stream()
+                            .anyMatch(v -> v.getProfessor().getId().equals(membro.getId()));
+                    if (!jaVotou) {
+                        Voto voto = new Voto();
+                        voto.setProfessor((Professor) membro);
+                        voto.setProcesso(processo);
+                        voto.setVoto(TipoVoto.AUSENTE);
+                        voto.setDataVoto(LocalDateTime.now());
+                        votoRepository.save(voto);
+                    }
+                }
+            });
+
+            // Alterar status do processo
+            processo.setStatus(StatusProcessoEnum.JULGADO);
+            processoRepository.save(processo);
+
+            redirectAttributes.addFlashAttribute("success", "Julgamento concluído com sucesso!");
+        } else {
+            redirectAttributes.addFlashAttribute("error", "Processo não encontrado.");
         }
+
+        return "redirect:/coordenador/sessao/" + sessaoId;
     }
+
+
+    @GetMapping("/sessao/{sessaoId}/processo/{processoId}/julgamento")
+    public String julgamentoProcesso(@PathVariable Long sessaoId,
+                                     @PathVariable Long processoId,
+                                     Model model,
+                                     @AuthenticationPrincipal UsuarioDetails usuario) {
+
+        System.out.println("============================chegour aqui=============================");
+
+        Reuniao sessao = reuniaoService.buscarPorId(sessaoId);
+        Processo processo = processoService.buscarPorId(processoId);
+
+        // Mapear votos por membro
+        List<VotoMembroDTO> votosMembros = sessao.getMembros().stream()
+                .map(membro -> {
+                    Voto voto = processo.getVotos().stream()
+                            .filter(v -> v.getProfessor() != null && v.getProfessor().getId().equals(membro.getId()))
+                            .findFirst()
+                            .orElse(null);
+                    return new VotoMembroDTO(membro, voto);
+                })
+                .toList();
+
+        model.addAttribute("podeVotar", votosMembros.stream()
+                .anyMatch(v -> v.getMembro().getId().equals(usuario.getUsuario().getId()) && v.getVoto() == null
+                        && processo.getStatus() == StatusProcessoEnum.EM_JULGAMENTO));
+
+
+        // Flag para saber se é coordenador
+        boolean ehCoordenador = usuario.getUsuario().getId().equals(sessao.getCoordenador().getId());
+
+        model.addAttribute("sessao", sessao);
+        model.addAttribute("processo", processo);
+        model.addAttribute("usuario", usuario.getUsuario());
+        model.addAttribute("ehCoordenador", ehCoordenador);
+        model.addAttribute("votosMembros", votosMembros);
+
+        System.out.println("votosMembros: " + votosMembros);
+
+        return "coordenador/julgamento-processo";
+    }
+
 
     private Professor obterCoordenador(UsuarioDetails usuarioDetails) {
         Long coordenadorId = usuarioDetails.getUsuario().getId();
