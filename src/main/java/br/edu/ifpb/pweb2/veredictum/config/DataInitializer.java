@@ -303,10 +303,10 @@ public class DataInitializer {
             r2.getMembros().add(professor3);
             r2.getPauta().add(p3);
 
-            // Reunião REALIZADA - Colegiado 1
+            // Reunião ENCERRADA - Colegiado 1
             Reuniao r3 = new Reuniao();
             r3.setData(LocalDateTime.now().minusDays(7));
-            r3.setStatus(StatusReuniao.REALIZADA);
+            r3.setStatus(StatusReuniao.ENCERRADA);
             r3.setCoordenador(coordenador);
             r3.getMembros().add(coordenador);
             r3.getMembros().add(professor);
@@ -323,10 +323,10 @@ public class DataInitializer {
             r4.getPauta().add(p8);
             r4.getPauta().add(p9);
 
-            // Reunião CANCELADA - Colegiado 1
+            // Reunião EM_ANDAMENTO - Colegiado 1
             Reuniao r5 = new Reuniao();
             r5.setData(LocalDateTime.now().minusDays(2));
-            r5.setStatus(StatusReuniao.CANCELADA);
+            r5.setStatus(StatusReuniao.EM_ANDAMENTO);
             r5.setCoordenador(coordenador);
             r5.getMembros().add(coordenador);
             r5.getMembros().add(professor);

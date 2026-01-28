@@ -45,4 +45,6 @@ public interface ReuniaoRepository extends JpaRepository<Reuniao, Long> {
            "LEFT JOIN FETCH p.relator " +
            "WHERE r.id = :id")
     Reuniao buscarDetalhes(@Param("id") Long id);
+
+    List<Reuniao> findByStatus(StatusReuniao status);
 }

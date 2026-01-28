@@ -120,11 +120,11 @@ public class CoordenadorController {
         long totalProgramadas = sessoes.stream()
                 .filter(r -> r.getStatus() == StatusReuniao.PROGRAMADA)
                 .count();
-        long totalRealizadas = sessoes.stream()
-                .filter(r -> r.getStatus() == StatusReuniao.REALIZADA)
+        long totalEncerradas = sessoes.stream()
+                .filter(r -> r.getStatus() == StatusReuniao.ENCERRADA)
                 .count();
-        long totalCanceladas = sessoes.stream()
-                .filter(r -> r.getStatus() == StatusReuniao.CANCELADA)
+        long totalEmAndamento = sessoes.stream()
+                .filter(r -> r.getStatus() == StatusReuniao.EM_ANDAMENTO)
                 .count();
 
         List<Processo> processosDisponiveis = processoService.listarProcessosDisponiveisParaPauta(colegiadoId);
@@ -132,8 +132,8 @@ public class CoordenadorController {
 
         model.addAttribute("sessoes", sessoes);
         model.addAttribute("totalProgramadas", totalProgramadas);
-        model.addAttribute("totalRealizadas", totalRealizadas);
-        model.addAttribute("totalCanceladas", totalCanceladas);
+        model.addAttribute("totalEncerradas", totalEncerradas);
+        model.addAttribute("totalEmAndamento", totalEmAndamento);
         model.addAttribute("processosDisponiveis", processosDisponiveis);
         model.addAttribute("colegiados", colegiados);
         model.addAttribute("usuario", coordenador);
@@ -244,9 +244,9 @@ public class CoordenadorController {
                 throw new RuntimeException("Acesso negado. Apenas o coordenador responsável pode excluir esta sessão.");
             }
             
-            // Não permitir excluir sessões já realizadas
-            if (sessao.getStatus() == StatusReuniao.REALIZADA) {
-                throw new RuntimeException("Não é possível excluir sessões já realizadas.");
+            // Não permitir excluir sessões já encerrdas
+            if (sessao.getStatus() == StatusReuniao.ENCERRADA) {
+                throw new RuntimeException("Não é possível excluir sessões já encerradas.");
             }
             
             reuniaoService.excluirSessao(id);
