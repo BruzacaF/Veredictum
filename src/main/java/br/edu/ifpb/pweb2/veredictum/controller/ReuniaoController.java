@@ -5,6 +5,8 @@ import br.edu.ifpb.pweb2.veredictum.model.Professor;
 import br.edu.ifpb.pweb2.veredictum.model.Reuniao;
 import br.edu.ifpb.pweb2.veredictum.security.UsuarioDetails;
 import br.edu.ifpb.pweb2.veredictum.service.ReuniaoService;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,6 +27,8 @@ import java.util.List;
 @RequestMapping("/reuniao")
 class ReuniaoController {
 
+    private static final Logger logger = LoggerFactory.getLogger(ReuniaoController.class);
+
     @Autowired
     private final ReuniaoService reuniaoService;
 
@@ -41,8 +45,12 @@ class ReuniaoController {
             Model model
     ) {
         try {
+            logger.info("Listando reuniões - Status: {}, Data: {}", status, data);
+            
             Professor professor = (Professor) usuario.getUsuario();
             List<Reuniao> reunioes = reuniaoService.buscarReuniosProfessorFiltro(professor, status, data);
+            
+            logger.info("Encontradas {} reuniões", reunioes.size());
             
             model.addAttribute("reunioes", reunioes);
             model.addAttribute("status", StatusReuniao.values());
@@ -51,6 +59,7 @@ class ReuniaoController {
 
             return "fragments/painel-reuniao :: painel-reuniao";
         } catch (Exception e) {
+            logger.error("Erro ao carregar reuniões", e);
             model.addAttribute("reunioes", List.of());
             model.addAttribute("status", StatusReuniao.values());
             model.addAttribute("error", "Erro ao carregar reuniões: " + e.getMessage());
@@ -62,6 +71,7 @@ class ReuniaoController {
     @Transactional(readOnly = true)
     public String detalhesModal(@PathVariable Long id, Model model) {
         try {
+            logger.info("Carregando detalhes da reunião: {}", id);
             Reuniao reuniao = reuniaoService.buscarPorIdComPauta(id);
             if (reuniao == null) {
                 throw new RuntimeException("Reunião não encontrada");
@@ -69,6 +79,7 @@ class ReuniaoController {
             model.addAttribute("reuniao", reuniao);
             return "fragments/modal-reuniao :: conteudo";
         } catch (Exception e) {
+            logger.error("Erro ao carregar modal da reunião: {}", id, e);
             model.addAttribute("error", e.getMessage());
             return "fragments/modal-reuniao :: erro";
         }

@@ -131,6 +131,11 @@
         const tabReunioes = document.querySelector('[data-bs-target="#painel-reunioes"]');
         const container = document.querySelector("#painel-reunioes");
 
+        if (!tabReunioes || !container) {
+            console.warn('Elementos da aba de reuniões não encontrados');
+            return;
+        }
+
         let carregado = false;
 
         tabReunioes.addEventListener("shown.bs.tab", () => {
@@ -141,6 +146,8 @@
         });
 
         function carregarReunioes(params = "") {
+            console.log('Carregando reuniões com params:', params);
+            
             container.innerHTML = `
                 <div class="text-center py-4 text-muted">
                     <div class="spinner-border"></div>
@@ -148,17 +155,35 @@
                 </div>
             `;
 
-            fetch(`/reuniao/professor/listar${params}`)
+            fetch(`/reuniao/professor/listar${params}`, {
+                method: 'GET',
+                headers: {
+                    'Accept': 'text/html',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            })
                 .then(res => {
-                    if (!res.ok) throw new Error('Erro ao carregar reuniões');
+                    console.log('Response status:', res.status);
+                    if (!res.ok) {
+                        return res.text().then(text => {
+                            console.error('Response error:', text);
+                            throw new Error(`HTTP ${res.status}: ${text}`);
+                        });
+                    }
                     return res.text();
                 })
-                .then(html => container.innerHTML = html)
+                .then(html => {
+                    console.log('HTML recebido, tamanho:', html.length);
+                    container.innerHTML = html;
+                })
                 .catch(err => {
-                    console.error(err);
+                    console.error('Erro ao carregar reuniões:', err);
                     container.innerHTML = `
-                        <div class="alert alert-danger">
-                            Erro ao carregar reuniões. Tente novamente.
+                        <div class="alert alert-danger m-3">
+                            <h5 class="alert-heading">Erro ao carregar reuniões</h5>
+                            <p class="mb-0">${err.message}</p>
+                            <hr>
+                            <small>Verifique o console do navegador para mais detalhes.</small>
                         </div>
                     `;
                 });
@@ -169,6 +194,7 @@
             if (form) {
                 e.preventDefault();
                 const params = new URLSearchParams(new FormData(form)).toString();
+                console.log('Filtrando com params:', params);
                 carregarReunioes("?" + params);
             }
         });

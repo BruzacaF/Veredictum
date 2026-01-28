@@ -18,6 +18,7 @@ import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 @Service
 public class ReuniaoService {
@@ -31,12 +32,31 @@ public class ReuniaoService {
     @Autowired
     private ProcessoRepository processoRepository;
 
-    public List<Reuniao>  buscarPorProfessor(Professor professor) {
+    public List<Reuniao> buscarPorProfessor(Professor professor) {
         return reuniaoRepository.findByColegiado_Membros(professor);
     }
 
-    public List<Reuniao> buscarReuniosProfessorFiltro(Professor professor, StatusReuniao statusReuniao, LocalDate data) {
-        return reuniaoRepository.buscarReunioesProfessor(professor, statusReuniao, data);
+    public List<Reuniao> buscarReuniosProfessorFiltro(Professor professor, StatusReuniao status, LocalDate data) {
+        List<Reuniao> reunioes = buscarPorProfessor(professor);
+        
+        // Aplicar filtro de status se fornecido
+        if (status != null) {
+            reunioes = reunioes.stream()
+                    .filter(r -> r.getStatus() == status)
+                    .collect(Collectors.toList());
+        }
+        
+        // Aplicar filtro de data se fornecido
+        if (data != null) {
+            reunioes = reunioes.stream()
+                    .filter(r -> r.getData().toLocalDate().equals(data))
+                    .collect(Collectors.toList());
+        }
+        
+        // Ordenar por data decrescente
+        reunioes.sort((r1, r2) -> r2.getData().compareTo(r1.getData()));
+        
+        return reunioes;
     }
 
     public Reuniao buscarPorIdComPauta(Long id) {
