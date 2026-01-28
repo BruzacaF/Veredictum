@@ -18,10 +18,10 @@
             <li class="nav-item">
                 <span class="navbar-text text-white me-3">
                     <i class="bi bi-person-circle"></i>
-                    <span th:text="${usuario.nome}">Coordenador</span>
+                    <span th:text="${usuario.nome}">Professor</span>
                 </span>
             </li>
-            <li class="nav-item">
+            <li class="nav-item" th:if="${ehCoordenador}">
                 <a class="nav-link text-white fw-bold" th:href="@{/coordenador/sessoes}">
                     <i class="bi bi-arrow-left"></i> Voltar
                 </a>
@@ -131,7 +131,7 @@
                             <th>Matrícula</th>
                             <th>Relator</th>
                             <th>Status</th>
-                            <th th:if="${sessao.status.name() != 'ENCERRADA'}">Ações</th>
+                            <th th:if="${ehCoordenador && sessao.status.name() != 'ENCERRADA'}">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -161,7 +161,7 @@
                                     Status
                                 </span>
                             </td>
-                            <td th:if="${sessao.status.name() != 'ENCERRADA'}">
+                            <td th:if="${ehCoordenador && sessao.status.name() != 'ENCERRADA'}">
                                 <!-- Verifica se existe algum processo em julgamento na sessão -->
                                 <th:block th:with="existeEmJulgamento=${sessao.pauta.?[status.name() == 'EM_JULGAMENTO'].size() > 0}">
                                     <!-- Se existe processo em julgamento, só mostra visualizar para ele e excluir para os demais -->
@@ -206,10 +206,10 @@
 
     <!-- Botões de Ação -->
     <div class="d-flex justify-content-between">
-        <a th:href="@{/coordenador/sessoes}" class="btn btn-secondary">
-            <i class="bi bi-arrow-left"></i> Voltar para Sessões
+        <a th:href="@{${ehCoordenador ? '/coordenador/sessoes' : '/home'}}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> Voltar
         </a>
-        <div th:if="${sessao.status.name() != 'REALIZADA'}">
+        <div th:if="${ehCoordenador && sessao.status.name() != 'REALIZADA'}">
             <button class="btn btn-warning" disabled>
                 <i class="bi bi-pencil"></i> Editar Sessão
             </button>
@@ -227,7 +227,7 @@
 <div th:replace="~{layout/footer :: footer}"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script>
+<script th:if="${ehCoordenador}">
 function confirmarExclusao() {
     const button = document.querySelector('[onclick="confirmarExclusao()"]');
     const sessaoId = button.getAttribute('data-id');

@@ -120,4 +120,42 @@ class ReuniaoController {
             return "redirect:/coordenador/sessoes";
         }
     }
+
+    @GetMapping("/{id}/detalhes")
+    @Transactional(readOnly = true)
+    public String detalhesReuniao(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UsuarioDetails usuario,
+            Model model
+    ) {
+        try {
+            logger.info("Visualizando detalhes da reunião: {}", id);
+            
+            Professor professor = (Professor) usuario.getUsuario();
+            Reuniao sessao = reuniaoService.buscarPorIdComPauta(id);
+            
+            if (sessao == null) {
+                throw new RuntimeException("Reunião não encontrada");
+            }
+            
+            // Verificar se o professor faz parte desta reunião
+            boolean fazParte = sessao.getMembros().stream()
+                    .anyMatch(m -> m.getId().equals(professor.getId()));
+            
+            if (!fazParte && !sessao.getCoordenador().getId().equals(professor.getId())) {
+                throw new RuntimeException("Você não tem acesso a esta reunião");
+            }
+            
+            model.addAttribute("sessao", sessao);
+            model.addAttribute("usuario", professor);
+            model.addAttribute("ehCoordenador", professor.isEhCoordenador());
+            
+            return "coordenador/detalhes-sessao";
+            
+        } catch (RuntimeException e) {
+            logger.error("Erro ao visualizar reunião: {}", id, e);
+            model.addAttribute("error", e.getMessage());
+            return "redirect:/home";
+        }
+    }
 }

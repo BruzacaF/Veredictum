@@ -254,10 +254,9 @@
         });
     });
 
-    // MODAL SCRIPT - Reuniões
+    // MODAL SCRIPT - Reuniões (REMOVIDO - agora redireciona para página de detalhes)
     document.addEventListener("DOMContentLoaded", () => {
         document.addEventListener("click", event => {
-
             const btn = event.target.closest(".btn-detalhes-reuniao");
             if (!btn) return;
 
@@ -266,38 +265,8 @@
             const id = btn.dataset.id;
             if (!id) return;
 
-            const modalEl = document.getElementById("modalReuniao");
-            if (!modalEl) {
-                console.warn('Modal de reunião não encontrado');
-                return;
-            }
-            
-            const modalBody = document.getElementById("modalReuniaoBody");
-            if (!modalBody) return;
-
-            modalBody.innerHTML = `
-                <div class="text-center py-4 text-muted">
-                    <div class="spinner-border"></div>
-                    <div class="mt-2">Carregando reunião...</div>
-                </div>
-            `;
-
-            const modal = new bootstrap.Modal(modalEl);
-            modal.show();
-
-            fetch(`/reuniao/${id}/modal`)
-                .then(res => {
-                    if (!res.ok) throw new Error();
-                    return res.text();
-                })
-                .then(html => modalBody.innerHTML = html)
-                .catch(() => {
-                    modalBody.innerHTML = `
-                        <div class="alert alert-danger">
-                            Erro ao carregar os dados da reunião.
-                        </div>
-                    `;
-                });
+            // Redirecionar para a página de detalhes
+            window.location.href = `/reuniao/${id}/detalhes`;
         });
     });
 </script>
