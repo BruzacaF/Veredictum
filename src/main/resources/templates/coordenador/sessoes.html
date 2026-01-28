@@ -67,18 +67,18 @@
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card text-white bg-success shadow-sm">
+            <div class="card text-white bg-warning shadow-sm">
                 <div class="card-body">
-                    <h5 class="card-title"><i class="bi bi-calendar-event"></i> Realizadas</h5>
-                    <h2 class="card-text" th:text="${totalRealizadas}">0</h2>
+                    <h5 class="card-title"><i class="bi bi-clock-history"></i> Em Andamento</h5>
+                    <h2 class="card-text" th:text="${totalEmAndamento}">0</h2>
                 </div>
             </div>
         </div>
         <div class="col-md-4">
-            <div class="card text-white bg-secondary shadow-sm">
+            <div class="card text-white bg-success shadow-sm">
                 <div class="card-body">
-                    <h5 class="card-title"><i class="bi bi-calendar-x"></i> Canceladas</h5>
-                    <h2 class="card-text" th:text="${totalCanceladas}">0</h2>
+                    <h5 class="card-title"><i class="bi bi-check-circle"></i> Encerradas</h5>
+                    <h2 class="card-text" th:text="${totalEncerradas}">0</h2>
                 </div>
             </div>
         </div>
@@ -110,7 +110,8 @@
                             <td>
                                 <span class="badge" 
                                       th:classappend="${sessao.status.name() == 'PROGRAMADA' ? 'bg-info' : 
-                                                       sessao.status.name() == 'REALIZADA' ? 'bg-success' : 'bg-secondary'}"
+                                                       sessao.status.name() == 'EM_ANDAMENTO' ? 'bg-warning' : 
+                                                       sessao.status.name() == 'ENCERRADA' ? 'bg-success' : 'bg-secondary'}"
                                       th:text="${sessao.status.name()}">
                                     Status
                                 </span>
@@ -121,7 +122,16 @@
                                    class="btn btn-sm btn-outline-primary" title="Ver detalhes">
                                     <i class="bi bi-eye"></i>
                                 </a>
-                                <button th:if="${sessao.status.name() != 'REALIZADA'}"
+                                <button th:if="${sessao.status.name() == 'PROGRAMADA'}"
+                                        type="button" 
+                                        class="btn btn-sm btn-outline-success ms-1" 
+                                        title="Iniciar sessão"
+                                        onclick="iniciarSessao(this)"
+                                        th:data-id="${sessao.id}"
+                                        th:data-data="${#temporals.format(sessao.data, 'dd/MM/yyyy HH:mm')}">
+                                    <i class="bi bi-play-fill"></i>
+                                </button>
+                                <button th:if="${sessao.status.name() != 'ENCERRADA'}"
                                         type="button" 
                                         class="btn btn-sm btn-outline-danger ms-1" 
                                         title="Excluir sessão"
@@ -271,6 +281,29 @@ function confirmarExclusao(button) {
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = `/coordenador/sessao/${sessaoId}/excluir`;
+        
+        // Adicionar CSRF token
+        const csrfToken = document.querySelector('input[name="_csrf"]').value;
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '_csrf';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function iniciarSessao(button) {
+    const sessaoId = button.getAttribute('data-id');
+    const sessaoData = button.getAttribute('data-data');
+    
+    if (confirm(`Tem certeza que deseja iniciar a sessão do dia ${sessaoData}?`)) {
+        // Criar formulário para submeter via POST
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/reuniao/${sessaoId}/iniciar`;
         
         // Adicionar CSRF token
         const csrfToken = document.querySelector('input[name="_csrf"]').value;

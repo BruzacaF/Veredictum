@@ -44,6 +44,11 @@ public class ReuniaoService {
 
     }
 
+    public Reuniao buscarPorId(Long id) {
+        return reuniaoRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Sessão não encontrada"));
+    }
+
     @Transactional
     public Reuniao criarSessao(Long colegiadoId, LocalDateTime dataHora,
                                List<Long> processosIds, List<Long> professoresIds) {
@@ -63,9 +68,6 @@ public class ReuniaoService {
         reuniao.setCoordenador(coordenador);
         reuniao.setPauta(new HashSet<>());
         reuniao.setMembros(new HashSet<>());
-
-        // Adicionar coordenador automaticamente aos membros
-        reuniao.getMembros().add(coordenador);
 
         // Adicionar outros membros selecionados
         if (professoresIds != null && !professoresIds.isEmpty()) {
@@ -109,5 +111,19 @@ public class ReuniaoService {
         }
         
         reuniaoRepository.delete(reuniao);
+    }
+
+    public Reuniao iniciarSessao(Long reuniaoId) {
+        Reuniao reuniao = buscarPorId(reuniaoId);
+        
+        List<Reuniao> reunioesEmAndamento = reuniaoRepository.findByStatus(StatusReuniao.EM_ANDAMENTO);
+        
+        if (!reunioesEmAndamento.isEmpty()) {
+            throw new IllegalStateException("Finalize a sessão anterior antes de iniciar outra.");
+        }
+        
+        reuniao.setStatus(StatusReuniao.EM_ANDAMENTO);
+
+        return reuniaoRepository.save(reuniao);
     }
 }
