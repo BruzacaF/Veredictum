@@ -15,7 +15,7 @@
             <!-- FILTROS -->
             <form class="row g-3 mb-4"
                   method="get"
-                  formReunioes>
+                  data-form-reunioes>
 
                 <div class="col-md-4">
                     <label class="form-label small fw-semibold">
@@ -43,7 +43,7 @@
                 </div>
 
                 <div class="col-md-2 d-flex align-items-end">
-                    <button class="btn btn-outline-secondary btn-sm w-100">
+                    <button type="submit" class="btn btn-outline-secondary btn-sm w-100">
                         <i class="bi bi-funnel me-1"></i>
                         Filtrar
                     </button>
@@ -52,13 +52,12 @@
             </form>
 
             <!-- TABELA -->
-            <div th:if="${not #lists.isEmpty(reunioes)}">
-                <div th:replace="~{fragments/tabela-reuniao :: tabela-reuniao(${reunioes}, ${statusReuniao})}">
-                </div>
+            <div th:if="${reunioes != null && not #lists.isEmpty(reunioes)}">
+                <div th:replace="~{fragments/tabela-reuniao :: tabela-reuniao(${reunioes}, ${status})}"></div>
             </div>
 
             <!-- EMPTY STATE -->
-            <div th:if="${#lists.isEmpty(reunioes)}"
+            <div th:if="${reunioes == null || #lists.isEmpty(reunioes)}"
                  class="text-center text-muted py-5">
 
                 <i class="bi bi-calendar-x fs-2 d-block mb-2"></i>
@@ -71,5 +70,31 @@
         </div>
 
     </section>
+
+    <!-- MODAL DE REUNIÃO -->
+    <div class="modal fade" id="modalReuniao" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content shadow">
+
+                <div class="modal-header">
+                    <h5 class="modal-title fw-semibold">
+                        <i class="bi bi-calendar-event me-1"></i>
+                        Detalhes da Reunião
+                    </h5>
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body" id="modalReuniaoBody">
+                    <div class="text-center text-muted py-5">
+                        <div class="spinner-border"></div>
+                        <div class="mt-2">Carregando informações…</div>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
 
 </th:block>

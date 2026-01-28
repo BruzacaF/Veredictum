@@ -1,66 +1,106 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<body>
+
 <th:block th:fragment="conteudo">
+    <div class="mb-4">
+        <h6 class="text-muted small mb-2 text-uppercase fw-bold">
+            <i class="bi bi-calendar3"></i> Data e Horário
+        </h6>
+        <p class="mb-0 fs-5">
+            <span th:text="${#temporals.format(reuniao.data, 'dd/MM/yyyy')}">Data</span>
+            às
+            <span th:text="${#temporals.format(reuniao.data, 'HH:mm')}">Hora</span>
+        </p>
+    </div>
 
-    <!-- INFORMAÇÕES GERAIS -->
-    <div class="card mb-3 shadow-sm">
-        <div class="card-body">
+    <div class="mb-4">
+        <h6 class="text-muted small mb-2 text-uppercase fw-bold">
+            <i class="bi bi-person-badge"></i> Coordenador
+        </h6>
+        <p class="mb-0">
+            <span th:text="${reuniao.coordenador.nome}">Nome</span>
+            <br/>
+            <small class="text-muted">
+                <span th:text="${reuniao.coordenador.email}">Email</span>
+            </small>
+        </p>
+    </div>
 
-            <h6 class="fw-semibold mb-3">
-                <i class="bi bi-info-circle me-1"></i>
-                Informações gerais
-            </h6>
+    <div class="mb-4">
+        <h6 class="text-muted small mb-2 text-uppercase fw-bold">
+            <i class="bi bi-flag"></i> Status
+        </h6>
+        <p class="mb-0">
+            <span class="badge fs-6"
+                  th:classappend="${reuniao.status.name() == 'PROGRAMADA' ? 'bg-info' :
+                                 reuniao.status.name() == 'EM_ANDAMENTO' ? 'bg-warning text-dark' :
+                                 reuniao.status.name() == 'ENCERRADA' ? 'bg-success' : 'bg-secondary'}"
+                  th:text="${reuniao.status.name()}">
+                Status
+            </span>
+        </p>
+    </div>
 
-            <dl class="row mb-0">
-                <dt class="col-sm-4 text-muted">Data</dt>
-                <dd class="col-sm-8 fw-semibold"
-                    th:text="${#temporals.format(reuniao.data, 'dd/MM/yyyy HH:mm')}"></dd>
-
-                <dt class="col-sm-4 text-muted">Status</dt>
-                <dd class="col-sm-8">
-                    <span class="badge bg-secondary"
-                          th:text="${reuniao.status}"></span>
-                </dd>
-
-                <dt class="col-sm-4 text-muted">Colegiado</dt>
-                <dd class="col-sm-8"
-                    th:text="${reuniao.colegiado.descricao}"></dd>
-            </dl>
-
+    <div th:if="${reuniao.membros != null && !reuniao.membros.isEmpty()}" class="mb-4">
+        <h6 class="text-muted small mb-3 text-uppercase fw-bold">
+            <i class="bi bi-people"></i> Membros Participantes
+            <span class="badge bg-secondary ms-2" th:text="${reuniao.membros.size()}">0</span>
+        </h6>
+        <div class="list-group">
+            <div class="list-group-item" th:each="membro : ${reuniao.membros}">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-person-circle fs-4 me-2 text-primary"></i>
+                    <div>
+                        <div class="fw-semibold" th:text="${membro.nome}">Nome do membro</div>
+                        <small class="text-muted" th:text="${membro.email}">Email</small>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- PROCESSOS -->
-    <div class="card mb-3 shadow-sm"
-         th:if="${!reuniao.pauta.isEmpty()}">
-
-        <div class="card-body">
-
-            <h6 class="fw-semibold mb-3">
-                <i class="bi bi-folder2-open me-1"></i>
-                Processos em pauta
-            </h6>
-
-            <ul class="list-group list-group-flush">
-                <li class="list-group-item"
-                    th:each="p : ${reuniao.pauta}">
-                    <strong th:text="${p.numero}"></strong>
-                    <div class="small text-muted"
-                         th:text="${p.assunto.nome}"></div>
-                </li>
-            </ul>
-
+    <div th:if="${reuniao.pauta != null && !reuniao.pauta.isEmpty()}" class="mb-4">
+        <h6 class="text-muted small mb-3 text-uppercase fw-bold">
+            <i class="bi bi-folder2-open"></i> Processos na Pauta
+            <span class="badge bg-secondary ms-2" th:text="${reuniao.pauta.size()}">0</span>
+        </h6>
+        <div class="list-group">
+            <div class="list-group-item" th:each="processo : ${reuniao.pauta}">
+                <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                        <div class="fw-bold text-primary" th:text="${processo.numero}">Número</div>
+                        <div class="small" th:text="${processo.assunto.nome}">Assunto</div>
+                        <div class="small text-muted">
+                            Aluno: <span th:text="${processo.aluno.nome}">Nome</span>
+                        </div>
+                    </div>
+                    <span class="badge"
+                          th:classappend="${processo.status.name() == 'EM_PAUTA' ? 'bg-warning text-dark' :
+                                         processo.status.name() == 'EM_JULGAMENTO' ? 'bg-info' :
+                                         processo.status.name() == 'JULGADO' ? 'bg-success' : 'bg-secondary'}"
+                          th:text="${processo.status.name()}">
+                        Status
+                    </span>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- ATA -->
-    <div class="card shadow-sm" th:if="${reuniao.ata != null}">
-        <div class="card-body">
-            <a class="btn btn-outline-success btn-sm"
-               th:href="@{/reuniao/{id}/ata(id=${reuniao.id})}"
-               target="_blank">
-                <i class="bi bi-eye-fill me-1"></i>
-                Visualizar ata
-            </a>
-        </div>
+    <div th:if="${(reuniao.membros == null || reuniao.membros.isEmpty()) && (reuniao.pauta == null || reuniao.pauta.isEmpty())}"
+         class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        Esta reunião ainda não possui membros ou processos associados.
     </div>
-
 </th:block>
+
+<th:block th:fragment="erro">
+    <div class="alert alert-danger">
+        <i class="bi bi-exclamation-triangle me-2"></i>
+        <strong>Erro!</strong>
+        <span th:text="${error}">Erro ao carregar dados</span>
+    </div>
+</th:block>
+
+</body>
+</html>

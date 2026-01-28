@@ -32,31 +32,46 @@ class ReuniaoController {
         this.reuniaoService = reuniaoService;
     }
 
-    @GetMapping
-    @RequestMapping("/professor/Listar")
-    public String listarReuniao(
+    @GetMapping("/professor/listar")
+    @Transactional(readOnly = true)
+    public String listarReuniaoProfessor(
             @AuthenticationPrincipal UsuarioDetails usuario,
-            @RequestParam(required = false)StatusReuniao status,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)LocalDate data, Model model
-            ) {
+            @RequestParam(required = false) StatusReuniao status,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate data,
+            Model model
+    ) {
+        try {
+            Professor professor = (Professor) usuario.getUsuario();
+            List<Reuniao> reunioes = reuniaoService.buscarReuniosProfessorFiltro(professor, status, data);
+            
+            model.addAttribute("reunioes", reunioes);
+            model.addAttribute("status", StatusReuniao.values());
+            model.addAttribute("dataFiltro", data);
+            model.addAttribute("statusFiltro", status);
 
-        Professor professor = (Professor) usuario.getUsuario();
-        List<Reuniao> reunioes = reuniaoService.buscarReuniosProfessorFiltro(professor, status, data);
-        model.addAttribute("reunioes", reunioes);
-        model.addAttribute("status", StatusReuniao.values());
-        model.addAttribute("dataFiltro", data);
-        model.addAttribute("StatusFiltro", status);
-
-        return "fragments/painel-reuniao :: painel-reuniao";
+            return "fragments/painel-reuniao :: painel-reuniao";
+        } catch (Exception e) {
+            model.addAttribute("reunioes", List.of());
+            model.addAttribute("status", StatusReuniao.values());
+            model.addAttribute("error", "Erro ao carregar reuniões: " + e.getMessage());
+            return "fragments/painel-reuniao :: painel-reuniao";
+        }
     }
 
     @GetMapping("/{id}/modal")
+    @Transactional(readOnly = true)
     public String detalhesModal(@PathVariable Long id, Model model) {
-
-        Reuniao reuniao = reuniaoService.buscarPorIdComPauta(id);
-        model.addAttribute("reuniao", reuniao);
-
-        return "fragments/modal-reuniao :: conteudo";
+        try {
+            Reuniao reuniao = reuniaoService.buscarPorIdComPauta(id);
+            if (reuniao == null) {
+                throw new RuntimeException("Reunião não encontrada");
+            }
+            model.addAttribute("reuniao", reuniao);
+            return "fragments/modal-reuniao :: conteudo";
+        } catch (Exception e) {
+            model.addAttribute("error", e.getMessage());
+            return "fragments/modal-reuniao :: erro";
+        }
     }
 
     @PostMapping("/{id}/iniciar")
@@ -74,17 +89,15 @@ class ReuniaoController {
                 throw new RuntimeException("Sessão não encontrada");
             }
             
-            // Verificar se o coordenador tem permissão para iniciar esta sessão
             if (!sessao.getCoordenador().getId().equals(coordenador.getId())) {
                 throw new RuntimeException("Acesso negado. Apenas o coordenador responsável pode iniciar esta sessão.");
             }
             
-            // Verificar se a sessão está programada
             if (sessao.getStatus() != StatusReuniao.PROGRAMADA) {
                 throw new RuntimeException("Apenas sessões programadas podem ser iniciadas.");
             }
             
-            Reuniao reuniao = reuniaoService.iniciarSessao(id);
+            reuniaoService.iniciarSessao(id);
             redirectAttributes.addFlashAttribute("success", "✅ Sessão iniciada com sucesso!");
             return "redirect:/coordenador/sessao/" + id;
             

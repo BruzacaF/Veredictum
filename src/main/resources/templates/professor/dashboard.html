@@ -72,6 +72,8 @@
     </div>
 </div>
 
+<!-- Modal de Reunião movido para dentro do painel-reuniao -->
+
 <div th:replace="~{layout/footer :: footer}"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -127,7 +129,7 @@
     document.addEventListener("DOMContentLoaded", () => {
 
         const tabReunioes = document.querySelector('[data-bs-target="#painel-reunioes"]');
-        const container = document.getElementById("painel-reunioes");
+        const container = document.querySelector("#painel-reunioes");
 
         let carregado = false;
 
@@ -139,15 +141,33 @@
         });
 
         function carregarReunioes(params = "") {
-            fetch(`/reuniao/professor/Listar${params}`)
-                .then(res => res.text())
-                .then(html => container.innerHTML = html);
+            container.innerHTML = `
+                <div class="text-center py-4 text-muted">
+                    <div class="spinner-border"></div>
+                    <div class="mt-2">Carregando reuniões...</div>
+                </div>
+            `;
+
+            fetch(`/reuniao/professor/listar${params}`)
+                .then(res => {
+                    if (!res.ok) throw new Error('Erro ao carregar reuniões');
+                    return res.text();
+                })
+                .then(html => container.innerHTML = html)
+                .catch(err => {
+                    console.error(err);
+                    container.innerHTML = `
+                        <div class="alert alert-danger">
+                            Erro ao carregar reuniões. Tente novamente.
+                        </div>
+                    `;
+                });
         }
 
         document.addEventListener("submit", e => {
-            if (e.target.closest("form[formReunioes]")) {
+            const form = e.target.closest("form[data-form-reunioes]");
+            if (form) {
                 e.preventDefault();
-                const form = e.target;
                 const params = new URLSearchParams(new FormData(form)).toString();
                 carregarReunioes("?" + params);
             }
@@ -208,50 +228,53 @@
         });
     });
 
-    // modal reunisao sapitco
-    document.addEventListener("click", event => {
+    // MODAL SCRIPT - Reuniões
+    document.addEventListener("DOMContentLoaded", () => {
+        document.addEventListener("click", event => {
 
-        const btn = event.target.closest(".btn-detalhes-reuniao");
-        if (!btn) return;
+            const btn = event.target.closest(".btn-detalhes-reuniao");
+            if (!btn) return;
 
-        event.preventDefault();
+            event.preventDefault();
 
-        const id = btn.dataset.id;
+            const id = btn.dataset.id;
+            if (!id) return;
 
-        const modalEl = document.getElementById("modalReuniao");
-        const modalBody = modalEl.querySelector(".modal-body");
+            const modalEl = document.getElementById("modalReuniao");
+            if (!modalEl) {
+                console.warn('Modal de reunião não encontrado');
+                return;
+            }
+            
+            const modalBody = document.getElementById("modalReuniaoBody");
+            if (!modalBody) return;
 
-        modalBody.innerHTML = `
-        <div class="text-center py-4 text-muted">
-            <div class="spinner-border"></div>
-            <div class="mt-2">Carregando reunião...</div>
-        </div>
-    `;
-
-        const modal = new bootstrap.Modal(modalEl);
-        modal.show();
-
-        fetch(`/reuniao/${id}/modal`)
-            .then(res => {
-                if (!res.ok) throw new Error();
-                return res.text();
-            })
-            .then(html => modalBody.innerHTML = html)
-            .catch(() => {
-                modalBody.innerHTML = `
-                <div class="alert alert-danger">
-                    Erro ao carregar os dados da reunião.
+            modalBody.innerHTML = `
+                <div class="text-center py-4 text-muted">
+                    <div class="spinner-border"></div>
+                    <div class="mt-2">Carregando reunião...</div>
                 </div>
             `;
-            });
+
+            const modal = new bootstrap.Modal(modalEl);
+            modal.show();
+
+            fetch(`/reuniao/${id}/modal`)
+                .then(res => {
+                    if (!res.ok) throw new Error();
+                    return res.text();
+                })
+                .then(html => modalBody.innerHTML = html)
+                .catch(() => {
+                    modalBody.innerHTML = `
+                        <div class="alert alert-danger">
+                            Erro ao carregar os dados da reunião.
+                        </div>
+                    `;
+                });
+        });
     });
-
-
-
-
 </script>
-
-
 
 </body>
 </html>
