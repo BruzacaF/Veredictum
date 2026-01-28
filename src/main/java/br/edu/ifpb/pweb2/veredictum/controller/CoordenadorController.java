@@ -216,6 +216,7 @@ public class CoordenadorController {
             
             model.addAttribute("sessao", sessao);
             model.addAttribute("usuario", coordenador);
+            model.addAttribute("ehCoordenador", true);
             
             return "coordenador/detalhes-sessao";
         } catch (RuntimeException e) {
@@ -257,6 +258,87 @@ public class CoordenadorController {
         } catch (RuntimeException e) {
             redirectAttributes.addFlashAttribute("error", "❌ Erro ao excluir sessão: " + e.getMessage());
             return "redirect:/coordenador/sessoes";
+        }
+    }
+
+    @PostMapping("/sessao/{reuniaoId}/processo/{processoId}/remover")
+    @Transactional
+    public String removerProcessoDaPauta(
+            @PathVariable Long reuniaoId,
+            @PathVariable Long processoId,
+            @AuthenticationPrincipal UsuarioDetails usuarioDetails,
+            RedirectAttributes redirectAttributes
+    ) {
+        try {
+            Professor coordenador = obterCoordenador(usuarioDetails);
+            Reuniao sessao = reuniaoService.buscarPorId(reuniaoId);
+            
+            if (!sessao.getCoordenador().getId().equals(coordenador.getId())) {
+                throw new RuntimeException("Acesso negado.");
+            }
+            
+            reuniaoService.removerProcessoDaPauta(reuniaoId, processoId);
+            redirectAttributes.addFlashAttribute("success", "✅ Processo removido da pauta!");
+            
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", "❌ " + e.getMessage());
+        }
+        
+        return "redirect:/coordenador/sessao/" + reuniaoId;
+    }
+
+    @PostMapping("/sessao/{reuniaoId}/processo/{processoId}/julgar")
+    @Transactional
+    public String iniciarJulgamentoProcesso(
+            @PathVariable Long reuniaoId,
+            @PathVariable Long processoId,
+            @AuthenticationPrincipal UsuarioDetails usuarioDetails,
+            RedirectAttributes redirectAttributes
+    ) {
+        try {
+            Professor coordenador = obterCoordenador(usuarioDetails);
+            Reuniao sessao = reuniaoService.buscarPorId(reuniaoId);
+            
+            if (!sessao.getCoordenador().getId().equals(coordenador.getId())) {
+                throw new RuntimeException("Acesso negado.");
+            }
+            
+            reuniaoService.iniciarJulgamentoProcesso(reuniaoId, processoId);
+            return "redirect:/coordenador/sessao/" + reuniaoId + "/processo/" + processoId + "/julgamento";
+            
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", "❌ " + e.getMessage());
+            return "redirect:/coordenador/sessao/" + reuniaoId;
+        }
+    }
+
+    @GetMapping("/sessao/{reuniaoId}/processo/{processoId}/julgamento")
+    @Transactional(readOnly = true)
+    public String paginaJulgamento(
+            @PathVariable Long reuniaoId,
+            @PathVariable Long processoId,
+            @AuthenticationPrincipal UsuarioDetails usuarioDetails,
+            Model model
+    ) {
+        try {
+            Professor coordenador = obterCoordenador(usuarioDetails);
+            Reuniao sessao = reuniaoService.buscarPorIdComPauta(reuniaoId);
+            Processo processo = processoService.buscarPorId(processoId);
+            
+            if (!sessao.getCoordenador().getId().equals(coordenador.getId())) {
+                throw new RuntimeException("Acesso negado.");
+            }
+            
+            model.addAttribute("sessao", sessao);
+            model.addAttribute("processo", processo);
+            model.addAttribute("usuario", coordenador);
+            model.addAttribute("ehCoordenador", true);
+            
+            return "coordenador/julgamento-processo";
+            
+        } catch (RuntimeException e) {
+            model.addAttribute("error", e.getMessage());
+            return "redirect:/coordenador/sessao/" + reuniaoId;
         }
     }
 

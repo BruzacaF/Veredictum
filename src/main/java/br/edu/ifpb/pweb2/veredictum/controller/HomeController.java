@@ -54,20 +54,22 @@ public class HomeController {
     public String professor(Model model,
                             @AuthenticationPrincipal UsuarioDetails usuario) {
 
-
+        Professor professor = (Professor) usuario.getUsuario();
         Pageable pageable = PageRequest.of(0, 5);
 
         Page<Processo> processosPage = processoService.buscarPorRelatorPaginado(
-                (Professor) usuario.getUsuario(),
+                professor,
                 pageable
         );
 
-        List<Reuniao>  reuniaoList = reuniaoService.buscarPorProfessor((Professor) usuario.getUsuario());
+        List<Reuniao> reuniaoList = reuniaoService.buscarPorProfessor(professor);
+        
         model.addAttribute("itensTabela", processosPage.getContent());
         model.addAttribute("reunioes", reuniaoList);
         model.addAttribute("status", StatusReuniao.values());
         model.addAttribute("paginaAtual", processosPage.getNumber());
         model.addAttribute("totalPaginas", processosPage.getTotalPages());
+        model.addAttribute("usuario", professor);
 
         return "professor/dashboard";
     }

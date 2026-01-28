@@ -47,4 +47,7 @@ public interface ReuniaoRepository extends JpaRepository<Reuniao, Long> {
     Reuniao buscarDetalhes(@Param("id") Long id);
 
     List<Reuniao> findByStatus(StatusReuniao status);
+    List<Reuniao> findByMembrosContainingOrCoordenadorOrderByDataDesc(Professor membro, Professor coordenador);
+    
+    List<Reuniao> findByCoordenadorOrderByDataDesc(Professor coordenador);
 }
