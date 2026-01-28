@@ -131,6 +131,7 @@
                             <th>Matrícula</th>
                             <th>Relator</th>
                             <th>Status</th>
+                            <th th:if="${sessao.status.name() != 'ENCERRADA'}">Ações</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -154,10 +155,39 @@
                             <td>
                                 <span class="badge" 
                                       th:classappend="${processo.status.name() == 'EM_PAUTA' ? 'bg-warning text-dark' : 
+                                                     processo.status.name() == 'EM_JULGAMENTO' ? 'bg-info' :
                                                      processo.status.name() == 'JULGADO' ? 'bg-success' : 'bg-secondary'}"
                                       th:text="${processo.status.name()}">
                                     Status
                                 </span>
+                            </td>
+                            <td th:if="${sessao.status.name() != 'ENCERRADA'}">
+                                <button th:if="${sessao.status.name() == 'EM_ANDAMENTO' && processo.status.name() == 'EM_PAUTA'}"
+                                        type="button" 
+                                        class="btn btn-sm btn-success" 
+                                        title="Iniciar julgamento"
+                                        onclick="iniciarJulgamento(this)"
+                                        th:data-reuniao-id="${sessao.id}"
+                                        th:data-processo-id="${processo.id}"
+                                        th:data-numero="${processo.numero}">
+                                    <i class="bi bi-play-fill"></i>
+                                </button>
+                                <a th:if="${processo.status.name() == 'EM_JULGAMENTO'}"
+                                   th:href="@{/coordenador/sessao/{reuniaoId}/processo/{processoId}/julgamento(reuniaoId=${sessao.id},processoId=${processo.id})}"
+                                   class="btn btn-sm btn-primary" 
+                                   title="Visualizar julgamento">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <button th:if="${processo.status.name() == 'EM_PAUTA'}"
+                                        type="button" 
+                                        class="btn btn-sm btn-outline-danger ms-1" 
+                                        title="Retirar de pauta"
+                                        onclick="removerDaPauta(this)"
+                                        th:data-reuniao-id="${sessao.id}"
+                                        th:data-processo-id="${processo.id}"
+                                        th:data-numero="${processo.numero}">
+                                    <i class="bi bi-trash"></i>
+                                </button>
                             </td>
                         </tr>
                     </tbody>
@@ -196,12 +226,62 @@ function confirmarExclusao() {
     const sessaoData = button.getAttribute('data-data');
     
     if (confirm(`Tem certeza que deseja excluir a sessão do dia ${sessaoData}?\n\nEsta ação não pode ser desfeita e todos os processos voltarão ao status DISTRIBUÍDO.`)) {
-        // Criar formulário para submeter via POST
         const form = document.createElement('form');
         form.method = 'POST';
         form.action = `/coordenador/sessao/${sessaoId}/excluir`;
         
-        // Adicionar CSRF token
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content || 
+                         document.querySelector('input[name="_csrf"]')?.value;
+        
+        if (csrfToken) {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_csrf';
+            csrfInput.value = csrfToken;
+            form.appendChild(csrfInput);
+        }
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function removerDaPauta(button) {
+    const reuniaoId = button.getAttribute('data-reuniao-id');
+    const processoId = button.getAttribute('data-processo-id');
+    const processoNumero = button.getAttribute('data-numero');
+    
+    if (confirm(`Tem certeza que deseja retirar o processo ${processoNumero} da pauta?\n\nEle voltará ao status DISTRIBUÍDO.`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/coordenador/sessao/${reuniaoId}/processo/${processoId}/remover`;
+        
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content || 
+                         document.querySelector('input[name="_csrf"]')?.value;
+        
+        if (csrfToken) {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_csrf';
+            csrfInput.value = csrfToken;
+            form.appendChild(csrfInput);
+        }
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function iniciarJulgamento(button) {
+    const reuniaoId = button.getAttribute('data-reuniao-id');
+    const processoId = button.getAttribute('data-processo-id');
+    const processoNumero = button.getAttribute('data-numero');
+    
+    if (confirm(`Iniciar julgamento do processo ${processoNumero}?`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/coordenador/sessao/${reuniaoId}/processo/${processoId}/julgar`;
+        
         const csrfToken = document.querySelector('meta[name="_csrf"]')?.content || 
                          document.querySelector('input[name="_csrf"]')?.value;
         

@@ -86,7 +86,7 @@ class ReuniaoController {
             
             Reuniao reuniao = reuniaoService.iniciarSessao(id);
             redirectAttributes.addFlashAttribute("success", "✅ Sessão iniciada com sucesso!");
-            return "redirect:/coordenador/sessoes";
+            return "redirect:/coordenador/sessao/" + id;
             
         } catch (IllegalStateException e) {
             redirectAttributes.addFlashAttribute("error", "⚠️ " + e.getMessage());

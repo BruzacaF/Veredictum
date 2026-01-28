@@ -126,4 +126,41 @@ public class ReuniaoService {
 
         return reuniaoRepository.save(reuniao);
     }
+
+    @Transactional
+    public void removerProcessoDaPauta(Long reuniaoId, Long processoId) {
+        Reuniao reuniao = buscarPorIdComPauta(reuniaoId);
+        Processo processo = processoRepository.findById(processoId)
+                .orElseThrow(() -> new RuntimeException("Processo não encontrado"));
+        
+        if (reuniao.getStatus() == StatusReuniao.ENCERRADA) {
+            throw new RuntimeException("Não é possível remover processos de sessões encerradas.");
+        }
+        
+        reuniao.getPauta().remove(processo);
+        processo.setReuniao(null);
+        processo.setStatus(StatusProcessoEnum.DISTRIBUIDO);
+        
+        processoRepository.save(processo);
+        reuniaoRepository.save(reuniao);
+    }
+
+    @Transactional
+    public Processo iniciarJulgamentoProcesso(Long reuniaoId, Long processoId) {
+        Reuniao reuniao = buscarPorId(reuniaoId);
+        
+        if (reuniao.getStatus() != StatusReuniao.EM_ANDAMENTO) {
+            throw new RuntimeException("A sessão precisa estar em andamento para julgar processos.");
+        }
+        
+        Processo processo = processoRepository.findById(processoId)
+                .orElseThrow(() -> new RuntimeException("Processo não encontrado"));
+        
+        if (!reuniao.getPauta().contains(processo)) {
+            throw new RuntimeException("Processo não está na pauta desta sessão.");
+        }
+        
+        processo.setStatus(StatusProcessoEnum.EM_JULGAMENTO);
+        return processoRepository.save(processo);
+    }
 }
