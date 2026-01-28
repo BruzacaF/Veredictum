@@ -1,6 +1,7 @@
 package br.edu.ifpb.pweb2.veredictum.controller;
 
 import br.edu.ifpb.pweb2.veredictum.enums.StatusReuniao;
+import br.edu.ifpb.pweb2.veredictum.model.Processo;
 import br.edu.ifpb.pweb2.veredictum.model.Professor;
 import br.edu.ifpb.pweb2.veredictum.model.Reuniao;
 import br.edu.ifpb.pweb2.veredictum.security.UsuarioDetails;
@@ -156,6 +157,52 @@ class ReuniaoController {
             logger.error("Erro ao visualizar reunião: {}", id, e);
             model.addAttribute("error", e.getMessage());
             return "redirect:/home";
+        }
+    }
+
+    @GetMapping("/{reuniaoId}/processo/{processoId}/visualizar")
+    @Transactional(readOnly = true)
+    public String visualizarJulgamento(
+            @PathVariable Long reuniaoId,
+            @PathVariable Long processoId,
+            @AuthenticationPrincipal UsuarioDetails usuario,
+            Model model
+    ) {
+        try {
+            logger.info("Professor visualizando julgamento - Reunião: {}, Processo: {}", reuniaoId, processoId);
+            
+            Professor professor = (Professor) usuario.getUsuario();
+            Reuniao sessao = reuniaoService.buscarPorIdComPauta(reuniaoId);
+            
+            if (sessao == null) {
+                throw new RuntimeException("Reunião não encontrada");
+            }
+            
+            // Verificar se o professor faz parte desta reunião
+            boolean fazParte = sessao.getMembros().stream()
+                    .anyMatch(m -> m.getId().equals(professor.getId()));
+            
+            if (!fazParte && !sessao.getCoordenador().getId().equals(professor.getId())) {
+                throw new RuntimeException("Você não tem acesso a esta reunião");
+            }
+            
+            Processo processo = sessao.getPauta().stream()
+                    .filter(p -> p.getId().equals(processoId))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Processo não encontrado na pauta desta reunião"));
+            
+            model.addAttribute("sessao", sessao);
+            model.addAttribute("processo", processo);
+            model.addAttribute("usuario", professor);
+            model.addAttribute("ehCoordenador", professor.isEhCoordenador() && 
+                                                sessao.getCoordenador().getId().equals(professor.getId()));
+            
+            return "coordenador/julgamento-processo";
+            
+        } catch (RuntimeException e) {
+            logger.error("Erro ao visualizar julgamento: Reunião {}, Processo {}", reuniaoId, processoId, e);
+            model.addAttribute("error", e.getMessage());
+            return "redirect:/home/professor";
         }
     }
 }

@@ -332,6 +332,7 @@ public class CoordenadorController {
             model.addAttribute("sessao", sessao);
             model.addAttribute("processo", processo);
             model.addAttribute("usuario", coordenador);
+            model.addAttribute("ehCoordenador", true);
             
             return "coordenador/julgamento-processo";
             

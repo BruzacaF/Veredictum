@@ -136,7 +136,7 @@
                             <th>Matrícula</th>
                             <th>Relator</th>
                             <th>Status</th>
-                            <th th:if="${ehCoordenador && sessao.status.name() != 'ENCERRADA'}">Ações</th>
+                            <th>Ações</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -166,40 +166,57 @@
                                     Status
                                 </span>
                             </td>
-                            <td th:if="${ehCoordenador && sessao.status.name() != 'ENCERRADA'}">
-                                <!-- Verifica se existe algum processo em julgamento na sessão -->
-                                <th:block th:with="existeEmJulgamento=${sessao.pauta.?[status.name() == 'EM_JULGAMENTO'].size() > 0}">
-                                    <!-- Se existe processo em julgamento, só mostra visualizar para ele e excluir para os demais -->
-                                    <a th:if="${existeEmJulgamento && processo.status.name() == 'EM_JULGAMENTO'}"
-                                       th:href="@{/coordenador/sessao/{reuniaoId}/processo/{processoId}/julgamento(reuniaoId=${sessao.id},processoId=${processo.id})}"
-                                       class="btn btn-sm btn-primary" 
-                                       title="Visualizar julgamento">
-                                        <i class="bi bi-eye"></i>
+                            <td>
+                                <!-- Ações para PROFESSOR (visualizar na página de julgamento) -->
+                                <th:block th:unless="${ehCoordenador}">
+                                    <a th:href="@{/reuniao/{reuniaoId}/processo/{processoId}/visualizar(reuniaoId=${sessao.id},processoId=${processo.id})}"
+                                       class="btn btn-sm btn-outline-primary"
+                                       title="Ver julgamento">
+                                        <i class="bi bi-eye"></i> Visualizar
                                     </a>
-                                    
-                                    <!-- Se não existe processo em julgamento, mostra o play para processos em pauta -->
-                                    <button th:if="${!existeEmJulgamento && sessao.status.name() == 'EM_ANDAMENTO' && processo.status.name() == 'EM_PAUTA'}"
-                                            type="button" 
-                                            class="btn btn-sm btn-success" 
-                                            title="Iniciar julgamento"
-                                            onclick="iniciarJulgamento(this)"
-                                            th:data-reuniao-id="${sessao.id}"
-                                            th:data-processo-id="${processo.id}"
-                                            th:data-numero="${processo.numero}">
-                                        <i class="bi bi-play-fill"></i>
-                                    </button>
-                                    
-                                    <!-- Botão de excluir - só aparece se o processo estiver em pauta (não em julgamento) -->
-                                    <button th:if="${processo.status.name() == 'EM_PAUTA'}"
-                                            type="button" 
-                                            class="btn btn-sm btn-outline-danger ms-1" 
-                                            title="Retirar de pauta"
-                                            onclick="removerDaPauta(this)"
-                                            th:data-reuniao-id="${sessao.id}"
-                                            th:data-processo-id="${processo.id}"
-                                            th:data-numero="${processo.numero}">
-                                        <i class="bi bi-trash"></i>
-                                    </button>
+                                </th:block>
+                                
+                                <!-- Ações para COORDENADOR -->
+                                <th:block th:if="${ehCoordenador && sessao.status.name() != 'ENCERRADA'}">
+                                    <th:block th:with="existeEmJulgamento=${sessao.pauta.?[status.name() == 'EM_JULGAMENTO'].size() > 0}">
+                                        <a th:if="${existeEmJulgamento && processo.status.name() == 'EM_JULGAMENTO'}"
+                                           th:href="@{/coordenador/sessao/{reuniaoId}/processo/{processoId}/julgamento(reuniaoId=${sessao.id},processoId=${processo.id})}"
+                                           class="btn btn-sm btn-primary" 
+                                           title="Visualizar julgamento">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                        
+                                        <button th:if="${!existeEmJulgamento && sessao.status.name() == 'EM_ANDAMENTO' && processo.status.name() == 'EM_PAUTA'}"
+                                                type="button" 
+                                                class="btn btn-sm btn-success" 
+                                                title="Iniciar julgamento"
+                                                onclick="iniciarJulgamento(this)"
+                                                th:data-reuniao-id="${sessao.id}"
+                                                th:data-processo-id="${processo.id}"
+                                                th:data-numero="${processo.numero}">
+                                            <i class="bi bi-play-fill"></i>
+                                        </button>
+                                        
+                                        <button th:if="${processo.status.name() == 'EM_PAUTA'}"
+                                                type="button" 
+                                                class="btn btn-sm btn-outline-danger ms-1" 
+                                                title="Retirar de pauta"
+                                                onclick="removerDaPauta(this)"
+                                                th:data-reuniao-id="${sessao.id}"
+                                                th:data-processo-id="${processo.id}"
+                                                th:data-numero="${processo.numero}">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </th:block>
+                                </th:block>
+                                
+                                <!-- Se sessão encerrada, também visualiza na página de julgamento -->
+                                <th:block th:if="${ehCoordenador && sessao.status.name() == 'ENCERRADA'}">
+                                    <a th:href="@{/reuniao/{reuniaoId}/processo/{processoId}/visualizar(reuniaoId=${sessao.id},processoId=${processo.id})}"
+                                       class="btn btn-sm btn-outline-primary"
+                                       title="Ver julgamento">
+                                        <i class="bi bi-eye"></i> Visualizar
+                                    </a>
                                 </th:block>
                             </td>
                         </tr>
@@ -228,6 +245,8 @@
         </div>
     </div>
 </div>
+
+<!-- Modal removido - agora usa página dedicada -->
 
 <div th:replace="~{layout/footer :: footer}"></div>
 
@@ -310,6 +329,58 @@ function iniciarJulgamento(button) {
         form.submit();
     }
 }
+</script>
+
+<script>
+// Script para abrir modal de detalhes do processo (para todos os usuários)
+document.addEventListener("DOMContentLoaded", () => {
+    const modalEl = document.getElementById("modalProcesso");
+    const modalBody = document.getElementById("modalProcessoBody");
+    const modal = new bootstrap.Modal(modalEl);
+
+    document.addEventListener("click", async (event) => {
+        const btn = event.target.closest(".btn-detalhes");
+        if (!btn) return;
+
+        event.preventDefault();
+
+        const id = btn.dataset.id;
+        if (!id) return;
+
+        modalBody.innerHTML = `
+            <div class="text-center text-muted py-5">
+                <div class="spinner-border mb-2" role="status"></div>
+                <div>Carregando detalhes do processo...</div>
+            </div>
+        `;
+
+        modal.show();
+
+        try {
+            const resp = await fetch(`/processo/${id}/modal`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (!resp.ok) {
+                throw new Error("Erro ao carregar modal");
+            }
+
+            const html = await resp.text();
+            modalBody.innerHTML = html;
+
+        } catch (e) {
+            console.error(e);
+            modalBody.innerHTML = `
+                <div class="alert alert-danger small text-center">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    Não foi possível carregar os dados do processo.
+                </div>
+            `;
+        }
+    });
+});
 </script>
 </body>
 </html>
