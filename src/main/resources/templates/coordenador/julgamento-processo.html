@@ -198,26 +198,60 @@
                                           class="badge bg-primary ms-2">
                                         <i class="bi bi-star-fill"></i> Coordenador
                                     </span>
+                                    <span th:if="${membro.id == usuario.id}" 
+                                          class="badge bg-info ms-2">
+                                        <i class="bi bi-person-check"></i> Você
+                                    </span>
                                 </div>
                                 <div class="col-md-8">
                                     <th:block th:with="voto=${!processo.votos.?[professor.id == membro.id].isEmpty() ? processo.votos.?[professor.id == membro.id][0] : null}">
-                                        <span th:if="${voto != null}" 
-                                              class="badge voto-badge"
-                                              th:classappend="${voto.decisao?.name() == 'APROVADO' ? 'bg-success' : 
-                                                             voto.decisao?.name() == 'REPROVADO' ? 'bg-danger' : 
-                                                             voto.decisao?.name() == 'ABSTENCAO' ? 'bg-warning text-dark' : 'bg-secondary'}"
-                                              th:text="${voto.decisao?.name() ?: 'Pendente'}">
-                                            APROVADO
-                                        </span>
-                                        <span th:unless="${voto != null}" 
-                                              class="badge voto-badge bg-secondary">
-                                            Aguardando voto
-                                        </span>
-                                        <small th:if="${voto != null && voto.dataVoto != null}" 
-                                               class="text-muted ms-3" 
-                                               th:text="'Votado em: ' + ${#temporals.format(voto.dataVoto, 'dd/MM/yyyy HH:mm')}">
-                                            Votado em: 06/06/2016 14:30
-                                        </small>
+                                        <!-- Se é o próprio usuário e ainda não votou -->
+                                        <th:block th:if="${membro.id == usuario.id && voto == null && processo.status.name() == 'EM_JULGAMENTO'}">
+                                            <div class="btn-group" role="group">
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-outline-success"
+                                                        onclick="registrarVoto(this, 'APROVADO')"
+                                                        th:data-processo-id="${processo.id}"
+                                                        th:data-reuniao-id="${sessao.id}">
+                                                    <i class="bi bi-check-circle"></i> Aprovar
+                                                </button>
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-outline-danger"
+                                                        onclick="registrarVoto(this, 'REPROVADO')"
+                                                        th:data-processo-id="${processo.id}"
+                                                        th:data-reuniao-id="${sessao.id}">
+                                                    <i class="bi bi-x-circle"></i> Reprovar
+                                                </button>
+                                                <button type="button" 
+                                                        class="btn btn-sm btn-outline-warning"
+                                                        onclick="registrarVoto(this, 'ABSTENCAO')"
+                                                        th:data-processo-id="${processo.id}"
+                                                        th:data-reuniao-id="${sessao.id}">
+                                                    <i class="bi bi-dash-circle"></i> Abstenção
+                                                </button>
+                                            </div>
+                                        </th:block>
+                                        
+                                        <!-- Se já votou ou é outro membro -->
+                                        <th:block th:if="${voto != null || membro.id != usuario.id || processo.status.name() != 'EM_JULGAMENTO'}">
+                                            <span th:if="${voto != null}" 
+                                                  class="badge voto-badge"
+                                                  th:classappend="${voto.decisao?.name() == 'APROVADO' ? 'bg-success' : 
+                                                                 voto.decisao?.name() == 'REPROVADO' ? 'bg-danger' : 
+                                                                 voto.decisao?.name() == 'ABSTENCAO' ? 'bg-warning text-dark' : 'bg-secondary'}"
+                                                  th:text="${voto.decisao?.name() ?: 'Pendente'}">
+                                                APROVADO
+                                            </span>
+                                            <span th:unless="${voto != null}" 
+                                                  class="badge voto-badge bg-secondary">
+                                                Aguardando voto
+                                            </span>
+                                            <small th:if="${voto != null && voto.dataVoto != null}" 
+                                                   class="text-muted ms-3" 
+                                                   th:text="'Votado em: ' + ${#temporals.format(voto.dataVoto, 'dd/MM/yyyy HH:mm')}">
+                                                Votado em: 06/06/2016 14:30
+                                            </small>
+                                        </th:block>
                                     </th:block>
                                 </div>
                             </div>
@@ -299,6 +333,39 @@
         // TODO: Implementar visualização do parecer
         alert('Visualização de parecer será implementada');
     }
+</script>
+
+<script th:inline="javascript">
+// Script para registrar voto (disponível para todos os membros)
+function registrarVoto(button, decisao) {
+    const processoId = button.getAttribute('data-processo-id');
+    const reuniaoId = button.getAttribute('data-reuniao-id');
+    
+    const decisaoTexto = decisao === 'APROVADO' ? 'aprovar' : 
+                        decisao === 'REPROVADO' ? 'reprovar' : 'se abster';
+    
+    if (confirm(`Confirma seu voto para ${decisaoTexto} este processo?`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/reuniao/${reuniaoId}/processo/${processoId}/votar`;
+        
+        const csrfToken = /*[[${_csrf.token}]]*/ '';
+        const csrfInput = document.createElement('input');
+        csrfInput.type = 'hidden';
+        csrfInput.name = '_csrf';
+        csrfInput.value = csrfToken;
+        form.appendChild(csrfInput);
+        
+        const decisaoInput = document.createElement('input');
+        decisaoInput.type = 'hidden';
+        decisaoInput.name = 'decisao';
+        decisaoInput.value = decisao;
+        form.appendChild(decisaoInput);
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
 </script>
 </body>
 </html>

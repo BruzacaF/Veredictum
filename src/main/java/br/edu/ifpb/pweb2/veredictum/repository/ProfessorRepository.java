@@ -8,10 +8,11 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ProfessorRepository extends JpaRepository<Professor, Long> {
-    Professor findByEmail(String email);
+    Optional<Professor> findByEmail(String email);
     Professor findByMatricula(String matricula);
     List<Professor> findByEhCoordenadorTrue();
 
@@ -25,4 +26,7 @@ public interface ProfessorRepository extends JpaRepository<Professor, Long> {
     List<Professor> findByColegiadosContaining(Colegiado colegiado);
 
     List<Professor> findAllByOrderByNomeAsc();
+
+    @Query("SELECT p FROM Professor p WHERE p.ehCoordenador = true")
+    List<Professor> findAllCoordenadores();
 }

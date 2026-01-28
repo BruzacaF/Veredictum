@@ -205,4 +205,63 @@ class ReuniaoController {
             return "redirect:/home/professor";
         }
     }
+
+    @PostMapping("/{reuniaoId}/processo/{processoId}/votar")
+    @Transactional
+    public String registrarVoto(
+            @PathVariable Long reuniaoId,
+            @PathVariable Long processoId,
+            @RequestParam String decisao,
+            @AuthenticationPrincipal UsuarioDetails usuario,
+            RedirectAttributes redirectAttributes
+    ) {
+        try {
+            logger.info("Registrando voto - Reunião: {}, Processo: {}, Decisão: {}", reuniaoId, processoId, decisao);
+            
+            Professor professor = (Professor) usuario.getUsuario();
+            Reuniao sessao = reuniaoService.buscarPorIdComPauta(reuniaoId);
+            
+            if (sessao == null) {
+                throw new RuntimeException("Reunião não encontrada");
+            }
+            
+            // Verificar se o professor faz parte desta reunião
+            boolean fazParte = sessao.getMembros().stream()
+                    .anyMatch(m -> m.getId().equals(professor.getId()));
+            
+            if (!fazParte && !sessao.getCoordenador().getId().equals(professor.getId())) {
+                throw new RuntimeException("Você não está autorizado a votar nesta reunião");
+            }
+            
+            // Validar se o processo está em julgamento
+            Processo processo = sessao.getPauta().stream()
+                    .filter(p -> p.getId().equals(processoId))
+                    .findFirst()
+                    .orElseThrow(() -> new RuntimeException("Processo não encontrado na pauta"));
+            
+            if (!processo.getStatus().name().equals("EM_JULGAMENTO")) {
+                throw new RuntimeException("Este processo não está em julgamento no momento");
+            }
+            
+            // Registrar voto
+            reuniaoService.registrarVoto(reuniaoId, processoId, professor.getId(), decisao);
+            
+            redirectAttributes.addFlashAttribute("success", "✅ Voto registrado com sucesso!");
+            
+            // Redirecionar para a página apropriada
+            boolean ehCoordenador = professor.isEhCoordenador() && 
+                                   sessao.getCoordenador().getId().equals(professor.getId());
+            
+            if (ehCoordenador) {
+                return "redirect:/coordenador/sessao/" + reuniaoId + "/processo/" + processoId + "/julgamento";
+            } else {
+                return "redirect:/reuniao/" + reuniaoId + "/processo/" + processoId + "/visualizar";
+            }
+            
+        } catch (RuntimeException e) {
+            logger.error("Erro ao registrar voto: Reunião {}, Processo {}", reuniaoId, processoId, e);
+            redirectAttributes.addFlashAttribute("error", "❌ " + e.getMessage());
+            return "redirect:/home/professor";
+        }
+    }
 }

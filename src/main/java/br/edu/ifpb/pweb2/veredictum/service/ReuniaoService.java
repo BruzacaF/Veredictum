@@ -2,13 +2,13 @@ package br.edu.ifpb.pweb2.veredictum.service;
 
 import br.edu.ifpb.pweb2.veredictum.enums.StatusProcessoEnum;
 import br.edu.ifpb.pweb2.veredictum.enums.StatusReuniao;
-import br.edu.ifpb.pweb2.veredictum.model.Colegiado;
-import br.edu.ifpb.pweb2.veredictum.model.Processo;
-import br.edu.ifpb.pweb2.veredictum.model.Professor;
-import br.edu.ifpb.pweb2.veredictum.model.Reuniao;
+import br.edu.ifpb.pweb2.veredictum.enums.TipoDecisao;
+import br.edu.ifpb.pweb2.veredictum.model.*;
 import br.edu.ifpb.pweb2.veredictum.repository.ColegiadoRepository;
 import br.edu.ifpb.pweb2.veredictum.repository.ProcessoRepository;
 import br.edu.ifpb.pweb2.veredictum.repository.ReuniaoRepository;
+import br.edu.ifpb.pweb2.veredictum.repository.VotoRepository;
+import br.edu.ifpb.pweb2.veredictum.repository.ProfessorRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -31,6 +31,12 @@ public class ReuniaoService {
 
     @Autowired
     private ProcessoRepository processoRepository;
+    
+    @Autowired
+    private VotoRepository votoRepository;
+    
+    @Autowired
+    private ProfessorRepository professorRepository;
 
     public List<Reuniao> buscarPorProfessor(Professor professor) {
         return reuniaoRepository.findByColegiado_Membros(professor);
@@ -182,5 +188,37 @@ public class ReuniaoService {
         
         processo.setStatus(StatusProcessoEnum.EM_JULGAMENTO);
         return processoRepository.save(processo);
+    }
+
+    @Transactional
+    public void registrarVoto(Long reuniaoId, Long processoId, Long professorId, String decisao) {
+        Reuniao reuniao = buscarPorIdComPauta(reuniaoId);
+        
+        if (reuniao.getStatus() != StatusReuniao.EM_ANDAMENTO) {
+            throw new RuntimeException("A reunião precisa estar em andamento para registrar votos.");
+        }
+        
+        Processo processo = processoRepository.findById(processoId)
+                .orElseThrow(() -> new RuntimeException("Processo não encontrado"));
+        
+        if (processo.getStatus() != StatusProcessoEnum.EM_JULGAMENTO) {
+            throw new RuntimeException("O processo precisa estar em julgamento para receber votos.");
+        }
+        
+        Professor professor = professorRepository.findById(professorId)
+                .orElseThrow(() -> new RuntimeException("Professor não encontrado"));
+        
+        // Verificar se o professor já votou neste processo
+        boolean jaVotou = votoRepository.existsByProcessoIdAndProfessorId(processoId, professorId);
+        if (jaVotou) {
+            throw new RuntimeException("Você já votou neste processo.");
+        }
+        
+        // Criar e salvar o voto
+        Voto voto = new Voto();
+        voto.setProcesso(processo);
+        voto.setProfessor(professor);
+
+        votoRepository.save(voto);
     }
 }
