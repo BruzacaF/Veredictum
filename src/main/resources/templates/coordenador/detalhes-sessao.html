@@ -162,32 +162,40 @@
                                 </span>
                             </td>
                             <td th:if="${sessao.status.name() != 'ENCERRADA'}">
-                                <button th:if="${sessao.status.name() == 'EM_ANDAMENTO' && processo.status.name() == 'EM_PAUTA'}"
-                                        type="button" 
-                                        class="btn btn-sm btn-success" 
-                                        title="Iniciar julgamento"
-                                        onclick="iniciarJulgamento(this)"
-                                        th:data-reuniao-id="${sessao.id}"
-                                        th:data-processo-id="${processo.id}"
-                                        th:data-numero="${processo.numero}">
-                                    <i class="bi bi-play-fill"></i>
-                                </button>
-                                <a th:if="${processo.status.name() == 'EM_JULGAMENTO'}"
-                                   th:href="@{/coordenador/sessao/{reuniaoId}/processo/{processoId}/julgamento(reuniaoId=${sessao.id},processoId=${processo.id})}"
-                                   class="btn btn-sm btn-primary" 
-                                   title="Visualizar julgamento">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                                <button th:if="${processo.status.name() == 'EM_PAUTA'}"
-                                        type="button" 
-                                        class="btn btn-sm btn-outline-danger ms-1" 
-                                        title="Retirar de pauta"
-                                        onclick="removerDaPauta(this)"
-                                        th:data-reuniao-id="${sessao.id}"
-                                        th:data-processo-id="${processo.id}"
-                                        th:data-numero="${processo.numero}">
-                                    <i class="bi bi-trash"></i>
-                                </button>
+                                <!-- Verifica se existe algum processo em julgamento na sessão -->
+                                <th:block th:with="existeEmJulgamento=${sessao.pauta.?[status.name() == 'EM_JULGAMENTO'].size() > 0}">
+                                    <!-- Se existe processo em julgamento, só mostra visualizar para ele e excluir para os demais -->
+                                    <a th:if="${existeEmJulgamento && processo.status.name() == 'EM_JULGAMENTO'}"
+                                       th:href="@{/coordenador/sessao/{reuniaoId}/processo/{processoId}/julgamento(reuniaoId=${sessao.id},processoId=${processo.id})}"
+                                       class="btn btn-sm btn-primary" 
+                                       title="Visualizar julgamento">
+                                        <i class="bi bi-eye"></i>
+                                    </a>
+                                    
+                                    <!-- Se não existe processo em julgamento, mostra o play para processos em pauta -->
+                                    <button th:if="${!existeEmJulgamento && sessao.status.name() == 'EM_ANDAMENTO' && processo.status.name() == 'EM_PAUTA'}"
+                                            type="button" 
+                                            class="btn btn-sm btn-success" 
+                                            title="Iniciar julgamento"
+                                            onclick="iniciarJulgamento(this)"
+                                            th:data-reuniao-id="${sessao.id}"
+                                            th:data-processo-id="${processo.id}"
+                                            th:data-numero="${processo.numero}">
+                                        <i class="bi bi-play-fill"></i>
+                                    </button>
+                                    
+                                    <!-- Botão de excluir - só aparece se o processo estiver em pauta (não em julgamento) -->
+                                    <button th:if="${processo.status.name() == 'EM_PAUTA'}"
+                                            type="button" 
+                                            class="btn btn-sm btn-outline-danger ms-1" 
+                                            title="Retirar de pauta"
+                                            onclick="removerDaPauta(this)"
+                                            th:data-reuniao-id="${sessao.id}"
+                                            th:data-processo-id="${processo.id}"
+                                            th:data-numero="${processo.numero}">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </th:block>
                             </td>
                         </tr>
                     </tbody>
