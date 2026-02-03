@@ -155,14 +155,34 @@
                                 <p class="mb-2">
                                     <strong>Decisão do Relator:</strong>
                                     <span class="badge rounded px-3 py-2"
-                                          th:classappend="${processo.decisaoRelator?.name() == 'DEFERIDO' ? 'bg-success' : 
-                                                         processo.decisaoRelator?.name() == 'INDEFERIDO' ? 'bg-danger' : 'bg-secondary'}"
+                                          th:classappend="${processo.decisaoRelator?.name() == 'DEFERIMENTO' ? 'bg-success' : 
+                                                         processo.decisaoRelator?.name() == 'INDEFERIMENTO' ? 'bg-danger' : 'bg-secondary'}"
                                           th:text="${processo.decisaoRelator != null ? processo.decisaoRelator.name() : 'Sem parecer'}">
-                                        INDEFERIDO
+                                        INDEFERIMENTO
                                     </span>
                                 </p>
                             </div>
                         </div>
+                        
+                        <!-- Resultado Final (só aparece quando julgado e tem decisão final) -->
+                        <div class="row mb-3" th:if="${processo.status.name() == 'JULGADO' && processo.decisaoFinal != null}">
+                            <div class="col-12">
+                                <div class="alert alert-success border-2 shadow-sm">
+                                    <h5 class="alert-heading mb-3">
+                                        <i class="bi bi-check-circle-fill"></i> Resultado do Julgamento
+                                    </h5>
+                                    <p class="mb-0">
+                                        <strong>Decisão Final:</strong>
+                                        <span class="badge fs-5 ms-2 px-4 py-2"
+                                              th:classappend="${processo.decisaoFinal.name() == 'DEFERIMENTO' ? 'bg-success' : 'bg-danger'}"
+                                              th:text="${processo.decisaoFinal.name()}">
+                                            DEFERIMENTO
+                                        </span>
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        
                         <div class="row">
                             <div class="col-md-6">
                                 <p class="mb-0">
@@ -268,6 +288,36 @@
                     
                     
                     </div>
+                    
+                    <!-- Botão de Concluir Julgamento - Apenas para Coordenador -->
+                    <div class="mt-4" th:if="${ehCoordenador && processo.status.name() == 'EM_JULGAMENTO'}">
+                        <div class="alert alert-info">
+                            <i class="bi bi-info-circle"></i>
+                            <strong>Atenção:</strong> Ao concluir o julgamento, o resultado será calculado automaticamente. 
+                            Membros que não votaram serão marcados como AUSENTE.
+                        </div>
+                        <button class="btn btn-primary btn-lg w-100" onclick="concluirJulgamento()" type="button">
+                            <i class="bi bi-check-circle"></i> Concluir Julgamento e Calcular Resultado
+                        </button>
+                    </div>
+                    
+                    <!-- Resultado Final Exibido -->
+                    <div class="mt-4" th:if="${processo.status.name() == 'JULGADO' && processo.decisaoFinal != null}">
+                        <div class="alert alert-success border-3 shadow">
+                            <h5 class="alert-heading">
+                                <i class="bi bi-trophy-fill"></i> Julgamento Concluído
+                            </h5>
+                            <hr>
+                            <p class="mb-0">
+                                <strong>Decisão Final:</strong>
+                                <span class="badge fs-4 ms-2 px-4 py-2"
+                                      th:classappend="${processo.decisaoFinal.name() == 'DEFERIMENTO' ? 'bg-success' : 'bg-danger'}"
+                                      th:text="${processo.decisaoFinal.name()}">
+                                    DEFERIMENTO
+                                </span>
+                            </p>
+                        </div>
+                    </div>
                 </div>
                 
                 <div th:replace="~{layout/footer :: footer}"></div>
@@ -296,8 +346,11 @@
                     }
                     
                     function concluirJulgamento() {
-                        if (confirm('Tem certeza que deseja concluir o julgamento deste processo?\n\nEsta ação não pode ser desfeita.')) {
-                            const form = document.createElement('form');
+        if (confirm('🔔 CONFIRMAR CONCLUSÃO DO JULGAMENTO\n\n' +
+                    '✓ O resultado será calculado com base nos votos registrados\n' +
+                    '✓ Membros ausentes serão marcados automaticamente\n' +
+                    '✓ Esta ação não pode ser desfeita\n\n' +
+                    'Deseja prosseguir?')) {
                             form.method = 'POST';
                             form.action = `/coordenador/sessao/${sessaoId}/processo/${processoId}/concluir`;
                             

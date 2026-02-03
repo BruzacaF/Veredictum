@@ -42,6 +42,9 @@ public class Processo {
     @Enumerated(EnumType.STRING)
     private TipoDecisao decisaoRelator;
 
+    @Enumerated(EnumType.STRING)
+    private TipoDecisao decisaoFinal;
+
     @ManyToOne
     @JoinColumn(name = "relator_id")
     private Professor relator;

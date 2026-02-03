@@ -4,6 +4,7 @@ import br.edu.ifpb.pweb2.veredictum.dto.ProcessoDTOFiltro;
 import br.edu.ifpb.pweb2.veredictum.dto.VotoMembroDTO;
 import br.edu.ifpb.pweb2.veredictum.enums.StatusProcessoEnum;
 import br.edu.ifpb.pweb2.veredictum.enums.StatusReuniao;
+import br.edu.ifpb.pweb2.veredictum.enums.TipoDecisao;
 import br.edu.ifpb.pweb2.veredictum.enums.TipoVoto;
 import br.edu.ifpb.pweb2.veredictum.model.*;
 import br.edu.ifpb.pweb2.veredictum.repository.*;
@@ -323,14 +324,25 @@ public class CoordenadorController {
     @Transactional
     public String concluirJulgamento(@PathVariable Long sessaoId,
                                      @PathVariable Long processoId,
+                                     @AuthenticationPrincipal UsuarioDetails usuarioDetails,
                                      RedirectAttributes redirectAttributes) {
 
-        Optional<Processo> processoOpt = processoRepository.findById(processoId);
-        if (processoOpt.isPresent()) {
-            Processo processo = processoOpt.get();
+        try {
+            Professor coordenador = obterCoordenador(usuarioDetails);
+            Reuniao sessao = reuniaoRepository.findById(sessaoId)
+                    .orElseThrow(() -> new RuntimeException("Sessão não encontrada"));
+            
+            // Validar que é o coordenador da sessão
+            if (!sessao.getCoordenador().getId().equals(coordenador.getId())) {
+                redirectAttributes.addFlashAttribute("error", "Apenas o coordenador pode concluir julgamentos");
+                return "redirect:/coordenador/sessao/" + sessaoId;
+            }
+            
+            Optional<Processo> processoOpt = processoRepository.findById(processoId);
+            if (processoOpt.isPresent()) {
+                Processo processo = processoOpt.get();
 
-            // Marcar membros sem voto como AUSENTE
-            reuniaoRepository.findById(sessaoId).ifPresent(sessao -> {
+                // Marcar membros sem voto como AUSENTE
                 for (Usuario membro : sessao.getMembros()) {
                     boolean jaVotou = processo.getVotos().stream()
                             .anyMatch(v -> v.getProfessor().getId().equals(membro.getId()));
@@ -343,15 +355,48 @@ public class CoordenadorController {
                         votoRepository.save(voto);
                     }
                 }
-            });
 
-            // Alterar status do processo
-            processo.setStatus(StatusProcessoEnum.JULGADO);
-            processoRepository.save(processo);
+                // Calcular resultado final baseado nos votos
+                List<Voto> votos = votoRepository.findByProcessoId(processoId);
+                
+                long votosDeferidos = votos.stream()
+                        .filter(v -> v.getVoto() == TipoVoto.DEFERIDO)
+                        .count();
+                
+                long votosIndeferidos = votos.stream()
+                        .filter(v -> v.getVoto() == TipoVoto.INDEFERIDO)
+                        .count();
 
-            redirectAttributes.addFlashAttribute("success", "Julgamento concluído com sucesso!");
-        } else {
-            redirectAttributes.addFlashAttribute("error", "Processo não encontrado.");
+                // Determinar resultado final
+                TipoDecisao decisaoFinal;
+                if (votosDeferidos > votosIndeferidos) {
+                    decisaoFinal = TipoDecisao.DEFERIMENTO;
+                } else if (votosIndeferidos > votosDeferidos) {
+                    decisaoFinal = TipoDecisao.INDEFERIMENTO;
+                } else {
+                    // Empate: voto de minerva do coordenador
+                    Voto votoCoordenador = votos.stream()
+                            .filter(v -> v.getProfessor().getId().equals(coordenador.getId()))
+                            .findFirst()
+                            .orElseThrow(() -> new RuntimeException("Voto do coordenador não encontrado"));
+                    
+                    decisaoFinal = votoCoordenador.getVoto() == TipoVoto.DEFERIDO ? 
+                                  TipoDecisao.DEFERIMENTO : TipoDecisao.INDEFERIMENTO;
+                }
+
+                // Atualizar processo com decisão final
+                processo.setDecisaoFinal(decisaoFinal);
+                processo.setStatus(StatusProcessoEnum.JULGADO);
+                processoRepository.save(processo);
+
+                redirectAttributes.addFlashAttribute("success", "✅ Julgamento concluído! Resultado: " + decisaoFinal.name());
+            } else {
+                redirectAttributes.addFlashAttribute("error", "Processo não encontrado.");
+            }
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", "❌ Erro: " + e.getMessage());
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "❌ Erro inesperado ao concluir julgamento");
         }
 
         return "redirect:/coordenador/sessao/" + sessaoId;
