@@ -177,8 +177,8 @@
                                 <!-- Ações exclusivas do COORDENADOR -->
                                 <th:block th:if="${ehCoordenador}">
                                     <th:block th:with="existeEmJulgamento=${sessao.pauta.?[status.name() == 'EM_JULGAMENTO'].size() > 0}">
-                                        <!-- Botão Iniciar Julgamento: só aparece se não há outro processo em julgamento -->
-                                        <button th:if="${!existeEmJulgamento && processo.status.name() == 'EM_PAUTA' && (sessao.status.name() == 'EM_ANDAMENTO' || sessao.status.name() == 'PROGRAMADA')}"
+                                        <!-- Botão Iniciar Julgamento: só aparece se não há outro processo em julgamento E sessão está EM_ANDAMENTO -->
+                                        <button th:if="${!existeEmJulgamento && processo.status.name() == 'EM_PAUTA' && sessao.status.name() == 'EM_ANDAMENTO'}"
                                                 type="button" 
                                                 class="btn btn-sm btn-success ms-1" 
                                                 title="Iniciar julgamento"
