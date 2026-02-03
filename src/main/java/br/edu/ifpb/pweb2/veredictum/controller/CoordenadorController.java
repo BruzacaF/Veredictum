@@ -399,7 +399,7 @@ public class CoordenadorController {
             redirectAttributes.addFlashAttribute("error", "❌ Erro inesperado ao concluir julgamento");
         }
 
-        return "redirect:/coordenador/sessao/" + sessaoId;
+        return "redirect:/coordenador/sessao/" + sessaoId + "/processo/" + processoId + "/julgamento";
     }
 
 

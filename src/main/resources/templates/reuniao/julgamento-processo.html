@@ -164,25 +164,6 @@
                             </div>
                         </div>
                         
-                        <!-- Resultado Final (só aparece quando julgado e tem decisão final) -->
-                        <div class="row mb-3" th:if="${processo.status.name() == 'JULGADO' && processo.decisaoFinal != null}">
-                            <div class="col-12">
-                                <div class="alert alert-success border-2 shadow-sm">
-                                    <h5 class="alert-heading mb-3">
-                                        <i class="bi bi-check-circle-fill"></i> Resultado do Julgamento
-                                    </h5>
-                                    <p class="mb-0">
-                                        <strong>Decisão Final:</strong>
-                                        <span class="badge fs-5 ms-2 px-4 py-2"
-                                              th:classappend="${processo.decisaoFinal.name() == 'DEFERIMENTO' ? 'bg-success' : 'bg-danger'}"
-                                              th:text="${processo.decisaoFinal.name()}">
-                                            DEFERIMENTO
-                                        </span>
-                                    </p>
-                                </div>
-                            </div>
-                        </div>
-                        
                         <div class="row">
                             <div class="col-md-6">
                                 <p class="mb-0">
