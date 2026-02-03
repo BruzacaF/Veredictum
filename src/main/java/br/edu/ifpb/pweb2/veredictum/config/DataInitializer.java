@@ -3,6 +3,7 @@ package br.edu.ifpb.pweb2.veredictum.config;
 import br.edu.ifpb.pweb2.veredictum.enums.RoleEnum;
 import br.edu.ifpb.pweb2.veredictum.enums.StatusProcessoEnum;
 import br.edu.ifpb.pweb2.veredictum.enums.StatusReuniao;
+import br.edu.ifpb.pweb2.veredictum.enums.TipoDecisao;
 import br.edu.ifpb.pweb2.veredictum.model.*;
 import br.edu.ifpb.pweb2.veredictum.repository.*;
 import org.springframework.boot.CommandLineRunner;
@@ -346,18 +347,22 @@ public class DataInitializer {
             // ---------------------------
             p1.setStatus(StatusProcessoEnum.EM_PAUTA);
             p1.setRelator(professor);
+            p1.setDecisaoRelator(TipoDecisao.DEFERIMENTO);
             
             p2.setStatus(StatusProcessoEnum.EM_PAUTA);
-            p2.setRelator(professor);
+            p2.setRelator(professor);            p8.setDecisaoRelator(TipoDecisao.DEFERIMENTO);            p2.setDecisaoRelator(TipoDecisao.INDEFERIMENTO);
             
             p3.setStatus(StatusProcessoEnum.EM_PAUTA);
             p3.setRelator(professor);
+            p3.setDecisaoRelator(TipoDecisao.DEFERIMENTO);
             
             p8.setStatus(StatusProcessoEnum.EM_PAUTA);
             p8.setRelator(professor);
+            p8.setDecisaoRelator(TipoDecisao.DEFERIMENTO);
             
             p9.setStatus(StatusProcessoEnum.EM_PAUTA);
             p9.setRelator(professor);
+            p9.setDecisaoRelator(TipoDecisao.INDEFERIMENTO);
             
             // Salvar as alterações de status e relator dos processos
             processoRepository.saveAll(List.of(p1, p2, p3, p8, p9));
