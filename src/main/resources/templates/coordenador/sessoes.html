@@ -118,7 +118,7 @@
                             </td>
                             <td th:text="${sessao.pauta.size()}">0</td>
                             <td>
-                                <a th:href="@{/coordenador/sessao/{id}(id=${sessao.id})}" 
+                                <a th:href="@{/reuniao/{id}/detalhes(id=${sessao.id})}"
                                    class="btn btn-sm btn-outline-primary" title="Ver detalhes">
                                     <i class="bi bi-eye"></i>
                                 </a>

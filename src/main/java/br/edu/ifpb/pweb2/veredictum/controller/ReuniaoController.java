@@ -159,7 +159,7 @@ class ReuniaoController {
             model.addAttribute("usuario", professor);
             model.addAttribute("ehCoordenador", professor.isEhCoordenador());
 
-            return "coordenador/detalhes-sessao";
+            return "reuniao/detalhes-sessao";
 
         } catch (RuntimeException e) {
             logger.error("Erro ao visualizar reunião: {}", id, e);
@@ -205,12 +205,12 @@ class ReuniaoController {
             model.addAttribute("ehCoordenador", professor.isEhCoordenador() &&
                     sessao.getCoordenador().getId().equals(professor.getId()));
 
-            return "coordenador/julgamento-processo";
+            return "reuniao/julgamento-processo";
 
         } catch (RuntimeException e) {
             logger.error("Erro ao visualizar julgamento: Reunião {}, Processo {}", reuniaoId, processoId, e);
             model.addAttribute("error", e.getMessage());
-            return "redirect:/home/professor";
+            return "redirect:/home";
         }
     }
 

@@ -225,7 +225,7 @@ public class CoordenadorController {
             model.addAttribute("usuario", coordenador);
             model.addAttribute("ehCoordenador", true);
             
-            return "coordenador/detalhes-sessao";
+            return "reuniao/detalhes-sessao";
         } catch (RuntimeException e) {
             model.addAttribute("error", e.getMessage());
             return "redirect:/coordenador/sessoes";

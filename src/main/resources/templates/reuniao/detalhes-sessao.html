@@ -167,34 +167,20 @@
                                 </span>
                             </td>
                             <td>
-                                <!-- Ações para PROFESSOR (visualizar na página de julgamento) -->
-                                <th:block th:unless="${ehCoordenador}">
-                                    <a th:href="@{/reuniao/{reuniaoId}/processo/{processoId}/visualizar(reuniaoId=${sessao.id},processoId=${processo.id})}"
-                                       class="btn btn-sm btn-outline-primary"
-                                       title="Ver julgamento">
-                                        <i class="bi bi-eye"></i> Visualizar
-                                    </a>
-                                    <a th:href="@{/coordenador/sessao/{sessaoId}/processo/{processoId}/julgamento}"
-                                       class="btn btn-sm btn-outline-primary"
-                                       title="Ver julgamento">
-                                        <i class="bi bi-eye"></i> Votar
-                                    </a>
-                                    
-                                </th:block>
+                                <!-- Botão Visualizar: sempre visível para todos -->
+                                <a th:href="@{/reuniao/{reuniaoId}/processo/{processoId}/visualizar(reuniaoId=${sessao.id},processoId=${processo.id})}"
+                                   class="btn btn-sm btn-outline-primary"
+                                   title="Ver julgamento">
+                                    <i class="bi bi-eye"></i> Visualizar
+                                </a>
                                 
-                                <!-- Ações para COORDENADOR -->
-                                <th:block th:if="${ehCoordenador && sessao.status.name() != 'ENCERRADA'}">
+                                <!-- Ações exclusivas do COORDENADOR -->
+                                <th:block th:if="${ehCoordenador}">
                                     <th:block th:with="existeEmJulgamento=${sessao.pauta.?[status.name() == 'EM_JULGAMENTO'].size() > 0}">
-                                        <a th:if="${existeEmJulgamento && processo.status.name() == 'EM_JULGAMENTO'}"
-                                           th:href="@{/coordenador/sessao/{reuniaoId}/processo/{processoId}/julgamento(reuniaoId=${sessao.id},processoId=${processo.id})}"
-                                           class="btn btn-sm btn-primary" 
-                                           title="Visualizar julgamento">
-                                            <i class="bi bi-eye"></i>
-                                        </a>
-                                        
-                                        <button th:if="${!existeEmJulgamento && sessao.status.name() == 'EM_ANDAMENTO' && processo.status.name() == 'EM_PAUTA'}"
+                                        <!-- Botão Iniciar Julgamento: só aparece se não há outro processo em julgamento -->
+                                        <button th:if="${!existeEmJulgamento && processo.status.name() == 'EM_PAUTA' && (sessao.status.name() == 'EM_ANDAMENTO' || sessao.status.name() == 'PROGRAMADA')}"
                                                 type="button" 
-                                                class="btn btn-sm btn-success" 
+                                                class="btn btn-sm btn-success ms-1" 
                                                 title="Iniciar julgamento"
                                                 onclick="iniciarJulgamento(this)"
                                                 th:data-reuniao-id="${sessao.id}"
@@ -203,7 +189,8 @@
                                             <i class="bi bi-play-fill"></i>
                                         </button>
                                         
-                                        <button th:if="${processo.status.name() == 'EM_PAUTA'}"
+                                        <!-- Remover da Pauta: só para processos ainda EM_PAUTA e sessão não encerrada -->
+                                        <button th:if="${processo.status.name() == 'EM_PAUTA' && sessao.status.name() != 'ENCERRADA'}"
                                                 type="button" 
                                                 class="btn btn-sm btn-outline-danger ms-1" 
                                                 title="Retirar de pauta"
@@ -214,15 +201,6 @@
                                             <i class="bi bi-trash"></i>
                                         </button>
                                     </th:block>
-                                </th:block>
-                                
-                                <!-- Se sessão encerrada, também visualiza na página de julgamento -->
-                                <th:block th:if="${ehCoordenador && sessao.status.name() == 'ENCERRADA'}">
-                                    <a th:href="@{/reuniao/{reuniaoId}/processo/{processoId}/visualizar(reuniaoId=${sessao.id},processoId=${processo.id})}"
-                                       class="btn btn-sm btn-outline-primary"
-                                       title="Ver julgamento">
-                                        <i class="bi bi-eye"></i> Visualizar
-                                    </a>
                                 </th:block>
                             </td>
                         </tr>
