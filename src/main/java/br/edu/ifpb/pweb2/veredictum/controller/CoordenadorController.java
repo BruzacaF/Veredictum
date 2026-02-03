@@ -396,7 +396,7 @@ public class CoordenadorController {
 
         System.out.println("votosMembros: " + votosMembros);
 
-        return "coordenador/julgamento-processo";
+        return "reuniao/julgamento-processo";
     }
 
 
