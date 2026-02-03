@@ -346,24 +346,19 @@
                     }
                     
                     function concluirJulgamento() {
-        if (confirm('🔔 CONFIRMAR CONCLUSÃO DO JULGAMENTO\n\n' +
-                    '✓ O resultado será calculado com base nos votos registrados\n' +
-                    '✓ Membros ausentes serão marcados automaticamente\n' +
-                    '✓ Esta ação não pode ser desfeita\n\n' +
-                    'Deseja prosseguir?')) {
-                            form.method = 'POST';
-                            form.action = `/coordenador/sessao/${sessaoId}/processo/${processoId}/concluir`;
-                            
-                            const csrfToken = /*[[${_csrf.token}]]*/ '';
-                            const csrfInput = document.createElement('input');
-                            csrfInput.type = 'hidden';
-                            csrfInput.name = '_csrf';
-                            csrfInput.value = csrfToken;
-                            form.appendChild(csrfInput);
-                            
-                            document.body.appendChild(form);
-                            form.submit();
-                        }
+                        const form = document.createElement('form');
+                        form.method = 'POST';
+                        form.action = `/coordenador/sessao/${sessaoId}/processo/${processoId}/concluir`;
+                        
+                        const csrfToken = /*[[${_csrf.token}]]*/ '';
+                        const csrfInput = document.createElement('input');
+                        csrfInput.type = 'hidden';
+                        csrfInput.name = '_csrf';
+                        csrfInput.value = csrfToken;
+                        form.appendChild(csrfInput);
+                        
+                        document.body.appendChild(form);
+                        form.submit();
                     }
                     
                     

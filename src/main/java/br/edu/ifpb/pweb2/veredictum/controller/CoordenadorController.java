@@ -320,7 +320,7 @@ public class CoordenadorController {
         }
     }
 
-    @PostMapping("/coordenador/sessao/{sessaoId}/processo/{processoId}/concluir")
+    @PostMapping("/sessao/{sessaoId}/processo/{processoId}/concluir")
     @Transactional
     public String concluirJulgamento(@PathVariable Long sessaoId,
                                      @PathVariable Long processoId,
