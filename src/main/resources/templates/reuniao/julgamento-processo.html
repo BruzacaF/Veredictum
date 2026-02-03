@@ -48,9 +48,15 @@
 
 <header class="bg-primary text-white shadow-sm mb-4">
     <nav class="container-fluid d-flex justify-content-between align-items-center py-3 px-4">
-        <h2 class="h4 mb-0">
-            <i class="bi bi-gavel"></i> Reunião <span th:text="${'#' + sessao.id}">0004</span>
-        </h2>
+        <div class="d-flex align-items-center gap-3">
+            <a th:href="@{/reuniao/{id}/detalhes(id=${sessao.id})}" 
+               class="btn btn-outline-light btn-sm">
+                <i class="bi bi-arrow-left"></i> Voltar
+            </a>
+            <h2 class="h4 mb-0">
+                <i class="bi bi-gavel"></i> Reunião <span th:text="${'#' + sessao.id}">0004</span>
+            </h2>
+        </div>
         <div class="d-flex align-items-center gap-3">
             <span class="navbar-text text-white">
                 Data: <strong th:text="${#temporals.format(sessao.data, 'dd/MM/yyyy')}">06/06/2016</strong>
