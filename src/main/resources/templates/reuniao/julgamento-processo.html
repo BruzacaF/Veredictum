@@ -213,8 +213,8 @@
                                 
                                 <!-- Coluna dos votos / botão -->
                                 <div class="col-md-8">
-                                    <!-- Botões de voto apenas para o próprio usuário -->
-                                    <div class="btn-group" th:if="${votoMembro.membro.id == usuario.id and podeVotar}">
+                                    <!-- Botões de voto para coordenador -->
+                                    <div class="btn-group" th:if="${votoMembro.membro.id == usuario.id and podeVotar and ehCoordenador}">
                                         <button class="btn btn-sm btn-outline-success" onclick="registrarVoto(this, 'COM_RELATOR')"
                                                 th:data-processo-id="${processo.id}"
                                                 th:data-reuniao-id="${sessao.id}"
@@ -229,6 +229,22 @@
                                                 th:data-processo-id="${processo.id}"
                                                 th:data-reuniao-id="${sessao.id}"
                                                 type="button">Abstenção
+                                        </button>
+                                    </div>
+                                    
+                                    <!-- Botões de voto para membros (não coordenadores) -->
+                                    <div class="btn-group" th:if="${votoMembro.membro.id == usuario.id and podeVotar and !ehCoordenador}">
+                                        <button class="btn btn-sm btn-outline-success" onclick="registrarVoto(this, 'COM_RELATOR')"
+                                                th:data-processo-id="${processo.id}"
+                                                th:data-reuniao-id="${sessao.id}"
+                                                type="button">
+                                            <i class="bi bi-hand-thumbs-up"></i> Com Relator
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-danger" onclick="registrarVoto(this, 'DIVERGENTE')"
+                                                th:data-processo-id="${processo.id}"
+                                                th:data-reuniao-id="${sessao.id}"
+                                                type="button">
+                                            <i class="bi bi-hand-thumbs-down"></i> Divergente
                                         </button>
                                     </div>
                                     

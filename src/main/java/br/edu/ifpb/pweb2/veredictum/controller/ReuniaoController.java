@@ -1,13 +1,14 @@
 package br.edu.ifpb.pweb2.veredictum.controller;
 
 import br.edu.ifpb.pweb2.veredictum.enums.RoleEnum;
+import br.edu.ifpb.pweb2.veredictum.enums.StatusProcessoEnum;
 import br.edu.ifpb.pweb2.veredictum.enums.StatusReuniao;
-import br.edu.ifpb.pweb2.veredictum.enums.TipoVoto;
 import br.edu.ifpb.pweb2.veredictum.model.*;
-import br.edu.ifpb.pweb2.veredictum.repository.ProcessoRepository;
-import br.edu.ifpb.pweb2.veredictum.repository.VotoRepository;
 import br.edu.ifpb.pweb2.veredictum.security.UsuarioDetails;
 import br.edu.ifpb.pweb2.veredictum.service.ReuniaoService;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,18 +21,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Optional;
 
 @Controller
 @RequestMapping("/reuniao")
 class ReuniaoController {
-
-    @Autowired
-    private final ProcessoRepository  processoRepository;
-    @Autowired
-    private final VotoRepository votoRepository;
 
     private static final Logger logger = LoggerFactory.getLogger(ReuniaoController.class);
 
@@ -39,9 +33,7 @@ class ReuniaoController {
     private final ReuniaoService reuniaoService;
 
 
-    ReuniaoController(ProcessoRepository processoRepository, VotoRepository votoRepository, ReuniaoService reuniaoService) {
-        this.processoRepository = processoRepository;
-        this.votoRepository = votoRepository;
+    ReuniaoController(ReuniaoService reuniaoService) {
         this.reuniaoService = reuniaoService;
     }
 
@@ -199,11 +191,33 @@ class ReuniaoController {
                     .findFirst()
                     .orElseThrow(() -> new RuntimeException("Processo não encontrado na pauta desta reunião"));
 
+            // Preparar dados de votação
+            List<java.util.Map<String, Object>> votosMembros = new java.util.ArrayList<>();
+            for (Professor membro : sessao.getMembros()) {
+                java.util.Map<String, Object> votoMembro = new java.util.HashMap<>();
+                votoMembro.put("membro", membro);
+                
+                // Buscar voto do membro para este processo
+                Voto voto = processo.getVotos().stream()
+                        .filter(v -> v.getProfessor().getId().equals(membro.getId()))
+                        .findFirst()
+                        .orElse(null);
+                votoMembro.put("voto", voto);
+                
+                votosMembros.add(votoMembro);
+            }
+
+            // Verificar se o professor pode votar (sessão em andamento e processo em julgamento)
+            boolean podeVotar = sessao.getStatus() == StatusReuniao.EM_ANDAMENTO && 
+                              processo.getStatus() == StatusProcessoEnum.EM_JULGAMENTO;
+
             model.addAttribute("sessao", sessao);
             model.addAttribute("processo", processo);
             model.addAttribute("usuario", professor);
             model.addAttribute("ehCoordenador", professor.isEhCoordenador() &&
                     sessao.getCoordenador().getId().equals(professor.getId()));
+            model.addAttribute("votosMembros", votosMembros);
+            model.addAttribute("podeVotar", podeVotar);
 
             return "reuniao/julgamento-processo";
 
@@ -215,35 +229,37 @@ class ReuniaoController {
     }
 
     @PostMapping("/{reuniaoId}/processo/{processoId}/votar")
-    @Transactional
     public String registrarVoto(@PathVariable Long reuniaoId,
                                 @PathVariable Long processoId,
                                 @RequestParam String decisao,
                                 @AuthenticationPrincipal UsuarioDetails usuario,
                                 RedirectAttributes redirectAttributes) {
 
-        Optional<Processo> processoOpt = processoRepository.findById(processoId);
-        if (processoOpt.isPresent()) {
-            Processo processo = processoOpt.get();
-
-            Voto voto = new Voto();
-            voto.setProfessor((Professor) usuario.getUsuario());
-            voto.setProcesso(processo);
-            voto.setVoto(TipoVoto.valueOf(decisao)); // COM_RELATOR, DIVERGENTE ou AUSENTE
-            voto.setDataVoto(LocalDateTime.now());
-
-            votoRepository.save(voto);
-
+        try {
+            Professor professor = (Professor) usuario.getUsuario();
+            boolean ehCoordenador = usuario.getUsuario().getRole() == RoleEnum.COORDENADOR;
+            
+            // Delegar a lógica de negócio para o service
+            reuniaoService.registrarVoto(reuniaoId, processoId, professor, decisao, ehCoordenador);
+            
             redirectAttributes.addFlashAttribute("success", "Voto registrado com sucesso!");
-        } else {
-            redirectAttributes.addFlashAttribute("error", "Processo não encontrado.");
+            
+        } catch (RuntimeException e) {
+            logger.error("Erro ao registrar voto: {}", e.getMessage());
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+        } catch (Exception e) {
+            logger.error("Erro inesperado ao registrar voto", e);
+            redirectAttributes.addFlashAttribute("error", "Erro ao registrar voto: " + e.getMessage());
         }
 
-        if(usuario.getUsuario().getRole() != RoleEnum.COORDENADOR){
-            return "redirect:/home";
-        }
+        return redirecionarPorRole(usuario, reuniaoId, processoId);
+    }
 
-        return "redirect:/coordenador/sessao/" + reuniaoId + "/processo/" + processoId + "/julgamento";
+    private String redirecionarPorRole(UsuarioDetails usuario, Long reuniaoId, Long processoId) {
+        if (usuario.getUsuario().getRole() == RoleEnum.COORDENADOR) {
+            return "redirect:/coordenador/sessao/" + reuniaoId + "/processo/" + processoId + "/julgamento";
+        }
+        return "redirect:/reuniao/" + reuniaoId + "/processo/" + processoId + "/visualizar";
     }
 
 }

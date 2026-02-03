@@ -2,6 +2,8 @@ package br.edu.ifpb.pweb2.veredictum.service;
 
 import br.edu.ifpb.pweb2.veredictum.enums.StatusProcessoEnum;
 import br.edu.ifpb.pweb2.veredictum.enums.StatusReuniao;
+import br.edu.ifpb.pweb2.veredictum.enums.TipoDecisao;
+import br.edu.ifpb.pweb2.veredictum.enums.TipoVoto;
 import br.edu.ifpb.pweb2.veredictum.model.*;
 import br.edu.ifpb.pweb2.veredictum.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -12,6 +14,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -186,35 +189,63 @@ public class ReuniaoService {
     }
 
     @Transactional
-    public void registrarVoto(Long reuniaoId, Long processoId, Long professorId, String decisao) {
-        Reuniao reuniao = buscarPorIdComPauta(reuniaoId);
-        
-        if (reuniao.getStatus() != StatusReuniao.EM_ANDAMENTO) {
-            throw new RuntimeException("A reunião precisa estar em andamento para registrar votos.");
-        }
-        
+    public void registrarVoto(Long reuniaoId, Long processoId, Professor professor, String decisao, boolean ehCoordenador) {
+        // Buscar processo
         Processo processo = processoRepository.findById(processoId)
                 .orElseThrow(() -> new RuntimeException("Processo não encontrado"));
         
-        if (processo.getStatus() != StatusProcessoEnum.EM_JULGAMENTO) {
-            throw new RuntimeException("O processo precisa estar em julgamento para receber votos.");
-        }
-        
-        Professor professor = professorRepository.findById(professorId)
-                .orElseThrow(() -> new RuntimeException("Professor não encontrado"));
-        
-        // Verificar se o professor já votou neste processo
-        boolean jaVotou = votoRepository.existsByProcessoIdAndProfessorId(processoId, professorId);
-        if (jaVotou) {
+        // Verificar se já existe voto deste professor para este processo
+        Optional<Voto> votoExistente = votoRepository.findByProfessorAndProcesso(professor, processo);
+        if (votoExistente.isPresent()) {
             throw new RuntimeException("Você já votou neste processo.");
         }
-        
+
+        TipoVoto tipoVoto = converterDecisaoParaVoto(decisao, processo, ehCoordenador);
+
         // Criar e salvar o voto
         Voto voto = new Voto();
-        voto.setProcesso(processo);
         voto.setProfessor(professor);
+        voto.setProcesso(processo);
+        voto.setVoto(tipoVoto);
+        voto.setDataVoto(LocalDateTime.now());
 
         votoRepository.save(voto);
+    }
+    
+    private TipoVoto converterDecisaoParaVoto(String decisao, Processo processo, boolean ehCoordenador) {
+        String decisaoRecebida = decisao.toUpperCase();
+
+        // Para coordenadores: decisões diretas (DEFERIDO, INDEFERIDO, AUSENTE)
+        // Para membros: COM_RELATOR ou DIVERGENTE (baseado na decisão do relator)
+        if (decisaoRecebida.equals("COM_RELATOR")) {
+            // Votar igual ao relator
+            if (processo.getDecisaoRelator() == null) {
+                throw new RuntimeException("Não é possível votar pois o relator ainda não decidiu.");
+            }
+            // Converter TipoDecisao para TipoVoto
+            return processo.getDecisaoRelator() == TipoDecisao.DEFERIMENTO ? 
+                   TipoVoto.DEFERIDO : TipoVoto.INDEFERIDO;
+            
+        } else if (decisaoRecebida.equals("DIVERGENTE")) {
+            // Votar contrário ao relator
+            if (processo.getDecisaoRelator() == null) {
+                throw new RuntimeException("Não é possível votar pois o relator ainda não decidiu.");
+            }
+            // Inverter a decisão do relator e converter para TipoVoto
+            return processo.getDecisaoRelator() == TipoDecisao.DEFERIMENTO ? 
+                   TipoVoto.INDEFERIDO : TipoVoto.DEFERIDO;
+                   
+        } else if (decisaoRecebida.equals("AUSENTE")) {
+            return TipoVoto.AUSENTE;
+            
+        } else {
+            // Para decisões diretas (coordenador)
+            try {
+                return TipoVoto.valueOf(decisaoRecebida);
+            } catch (IllegalArgumentException e) {
+                throw new RuntimeException("Tipo de voto inválido: " + decisao);
+            }
+        }
     }
 
     public void encerrarSessao(Long reuniaoId) {
