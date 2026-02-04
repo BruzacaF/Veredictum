@@ -119,7 +119,14 @@
                         </div>
                         <div class="mb-3" id="novoMatriculaContainer" style="display: none;">
                             <label class="form-label fw-medium">Matrícula</label>
-                            <input type="text" name="matricula" class="form-control" placeholder="Digite a matrícula">
+                            <input type="text" 
+                                   name="matricula" 
+                                   class="form-control" 
+                                   placeholder="Ex: 20221001 (YYYYNNNN)"
+                                   maxlength="8">
+                            <small class="text-muted">
+                                Formato: Ano (4 dígitos) + Número (4 dígitos)
+                            </small>
                         </div>
                     </div>
                     <div class="modal-footer border-0 pt-0">
@@ -167,7 +174,15 @@
                         </div>
                         <div class="mb-3" id="editMatriculaContainer" style="display: none;">
                             <label class="form-label fw-medium">Matrícula</label>
-                            <input type="text" name="matricula" id="editMatricula" class="form-control">
+                            <input type="text" 
+                                   name="matricula" 
+                                   id="editMatricula" 
+                                   class="form-control"
+                                   placeholder="Ex: 20221001 (YYYYNNNN)"
+                                   maxlength="8">
+                            <small class="text-muted">
+                                Formato: Ano (4 dígitos) + Número (4 dígitos)
+                            </small>
                         </div>
                     </div>
                     <div class="modal-footer border-0 pt-0">
@@ -206,11 +221,11 @@
     </div>
 </div>
 
-<style>
-    .bg-purple {
-        background-color: #7c3aed !important;
-    }
-    .bg-indigo {
+<script>
+    /**
+     * Valida a matrícula em tempo real com feedback visual.
+     * Regras:
+     * - Exatamente 8 dígitos numéricos
         background-color: #4f46e5 !important;
     }
 </style>

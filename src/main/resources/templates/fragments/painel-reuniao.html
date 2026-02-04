@@ -1,0 +1,76 @@
+<th:block th:fragment="painel-reuniao">
+
+    <section class="card border-0 shadow-sm">
+
+        <!-- HEADER -->
+        <header class="card-header bg-white border-bottom d-flex align-items-center gap-2">
+            <i class="bi bi-calendar-event text-primary fs-5"></i>
+            <h6 class="mb-0 fw-semibold">
+                Reuniões do Colegiadonn
+            </h6>
+        </header>
+
+        <div class="card-body">
+
+            <!-- FILTROS -->
+            <form class="row g-3 mb-4"
+                  method="get"
+                  data-form-reunioes>
+
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">
+                        Status da reunião
+                    </label>
+                    <select class="form-select form-select-sm"
+                            name="status">
+                        <option value="">Todos</option>
+                        <option th:each="st : ${status}"
+                                th:value="${st}"
+                                th:text="${st}"
+                                th:selected="${st == statusFiltro}">
+                        </option>
+                    </select>
+                </div>
+
+                <div class="col-md-4">
+                    <label class="form-label small fw-semibold">
+                        Data
+                    </label>
+                    <input type="date"
+                           class="form-control form-control-sm"
+                           name="data"
+                           th:value="${dataFiltro}">
+                </div>
+
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-outline-secondary btn-sm w-100">
+                        <i class="bi bi-funnel me-1"></i>
+                        Filtrar
+                    </button>
+                </div>
+
+            </form>
+
+            <!-- TABELA -->
+            <div th:if="${reunioes != null && not #lists.isEmpty(reunioes)}">
+                <div th:replace="~{fragments/tabela-reuniao :: tabela-reuniao(${reunioes}, ${status})}"></div>
+            </div>
+
+            <!-- EMPTY STATE -->
+            <div th:if="${reunioes == null || #lists.isEmpty(reunioes)}"
+                 class="text-center text-muted py-5">
+
+                <i class="bi bi-calendar-x fs-2 d-block mb-2"></i>
+                <span class="small">
+                    Nenhuma reunião encontrada com os filtros aplicados.
+                </span>
+
+            </div>
+
+        </div>
+
+    </section>
+
+    <!-- MODAL DE REUNIÃO REMOVIDO - agora usa página dedicada -->
+
+</th:block>

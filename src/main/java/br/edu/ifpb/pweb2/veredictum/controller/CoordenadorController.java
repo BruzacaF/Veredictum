@@ -1,25 +1,31 @@
 package br.edu.ifpb.pweb2.veredictum.controller;
 
 import br.edu.ifpb.pweb2.veredictum.dto.ProcessoDTOFiltro;
+import br.edu.ifpb.pweb2.veredictum.dto.VotoMembroDTO;
 import br.edu.ifpb.pweb2.veredictum.enums.StatusProcessoEnum;
-import br.edu.ifpb.pweb2.veredictum.model.Processo;
-import br.edu.ifpb.pweb2.veredictum.model.Professor;
-import br.edu.ifpb.pweb2.veredictum.repository.AssuntoRepository;
-import br.edu.ifpb.pweb2.veredictum.repository.UsuarioRepository;
+import br.edu.ifpb.pweb2.veredictum.enums.StatusReuniao;
+import br.edu.ifpb.pweb2.veredictum.enums.TipoDecisao;
+import br.edu.ifpb.pweb2.veredictum.model.*;
+import br.edu.ifpb.pweb2.veredictum.repository.*;
 import br.edu.ifpb.pweb2.veredictum.security.UsuarioDetails;
+import br.edu.ifpb.pweb2.veredictum.service.ColegiadoService;
 import br.edu.ifpb.pweb2.veredictum.service.ProcessoService;
 import br.edu.ifpb.pweb2.veredictum.service.ProfessorService;
+import br.edu.ifpb.pweb2.veredictum.service.ReuniaoService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestHeader;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/coordenador")
@@ -29,6 +35,12 @@ public class CoordenadorController {
     private ProcessoService processoService;
 
     @Autowired
+    private ProcessoRepository processoRepository;
+
+    @Autowired
+    private VotoRepository votoRepository;
+
+    @Autowired
     private AssuntoRepository assuntoRepository;
     
     @Autowired
@@ -36,6 +48,15 @@ public class CoordenadorController {
 
     @Autowired
     private ProfessorService professorService;
+
+    @Autowired
+    private ReuniaoService reuniaoService;
+
+    @Autowired
+    private ReuniaoRepository reuniaoRepository;
+
+    @Autowired
+    private ColegiadoService colegiadoService;
 
     @GetMapping("/processos")
     @Transactional(readOnly = true)
@@ -90,5 +111,482 @@ public class CoordenadorController {
         }
 
         return "coordenador/processos";
+    }
+
+    @GetMapping("/sessoes")
+    @Transactional(readOnly = true)
+    public String listarSessoes(
+            Model model,
+            @AuthenticationPrincipal UsuarioDetails usuarioDetails
+    ) {
+        Professor coordenador = obterCoordenador(usuarioDetails);
+        Long colegiadoId = obterColegiadoId(coordenador);
+
+        List<Reuniao> sessoes = reuniaoService.listarPorCoordenador(coordenador);
+        
+        long totalProgramadas = sessoes.stream()
+                .filter(r -> r.getStatus() == StatusReuniao.PROGRAMADA)
+                .count();
+        long totalEncerradas = sessoes.stream()
+                .filter(r -> r.getStatus() == StatusReuniao.ENCERRADA)
+                .count();
+        long totalEmAndamento = sessoes.stream()
+                .filter(r -> r.getStatus() == StatusReuniao.EM_ANDAMENTO)
+                .count();
+
+        List<Processo> processosDisponiveis = processoService.listarProcessosDisponiveisParaPauta(colegiadoId);
+        List<Colegiado> colegiados = colegiadoService.listarTodos();
+
+        model.addAttribute("sessoes", sessoes);
+        model.addAttribute("totalProgramadas", totalProgramadas);
+        model.addAttribute("totalEncerradas", totalEncerradas);
+        model.addAttribute("totalEmAndamento", totalEmAndamento);
+        model.addAttribute("processosDisponiveis", processosDisponiveis);
+        model.addAttribute("colegiados", colegiados);
+        model.addAttribute("usuario", coordenador);
+
+        return "coordenador/sessoes";
+    }
+
+    @GetMapping("/api/colegiado/{id}/professores")
+    @Transactional(readOnly = true)
+    public String buscarProfessoresColegiado(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UsuarioDetails usuarioDetails,
+            Model model
+    ) {
+        try {
+            obterCoordenador(usuarioDetails);
+            List<Professor> professores = professorService.buscarPorColegiadoId(id);
+            model.addAttribute("professores", professores);
+            return "fragments/membros-colegiado :: lista-membros";
+        } catch (RuntimeException e) {
+            model.addAttribute("error", e.getMessage());
+            return "fragments/membros-colegiado :: erro";
+        }
+    }
+
+    @PostMapping("/sessao/criar")
+    @Transactional
+    public String criarSessao(
+            @RequestParam Long colegiadoId,
+            @RequestParam String data,
+            @RequestParam String hora,
+            @RequestParam(required = false) List<Long> processosIds,
+            @RequestParam(required = false) List<Long> professoresIds,
+            @AuthenticationPrincipal UsuarioDetails usuarioDetails,
+            RedirectAttributes redirectAttributes
+    ) {
+        try {
+            Professor coordenador = obterCoordenador(usuarioDetails);
+
+            LocalDateTime dataHora = LocalDateTime.of(
+                    LocalDate.parse(data),
+                    LocalTime.parse(hora)
+            );
+
+            Reuniao reuniao = reuniaoService.criarSessao(colegiadoId, dataHora, processosIds, professoresIds);
+
+            String dataFormatada = dataHora.format(DateTimeFormatter.ofPattern("dd/MM/yyyy 'às' HH'h'mm"));
+            int qtdProcessos = processosIds != null ? processosIds.size() : 0;
+            
+            redirectAttributes.addFlashAttribute("success",
+                    String.format("✅ Sessão agendada para %s com %d processo(s) em pauta.",
+                            dataFormatada, qtdProcessos));
+
+            return "redirect:/coordenador/sessoes";
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Erro ao criar sessão: " + e.getMessage());
+            return "redirect:/coordenador/sessoes";
+        }
+    }
+
+    @GetMapping("/sessao/{id}")
+    @Transactional(readOnly = true)
+    public String visualizarSessao(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UsuarioDetails usuarioDetails,
+            Model model
+    ) {
+        try {
+            Professor coordenador = obterCoordenador(usuarioDetails);
+            Reuniao sessao = reuniaoService.buscarPorIdComPauta(id);
+            
+            if (sessao == null) {
+                throw new RuntimeException("Sessão não encontrada");
+            }
+            
+            // Verificar se o coordenador tem acesso a esta sessão
+            if (!sessao.getCoordenador().getId().equals(coordenador.getId())) {
+                throw new RuntimeException("Acesso negado a esta sessão");
+            }
+            
+            model.addAttribute("sessao", sessao);
+            model.addAttribute("usuario", coordenador);
+            model.addAttribute("ehCoordenador", true);
+            
+            return "reuniao/detalhes-sessao";
+        } catch (RuntimeException e) {
+            model.addAttribute("error", e.getMessage());
+            return "redirect:/coordenador/sessoes";
+        }
+    }
+
+    @PostMapping("/sessao/{id}/excluir")
+    @Transactional
+    public String excluirSessao(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UsuarioDetails usuarioDetails,
+            RedirectAttributes redirectAttributes
+    ) {
+        try {
+            Professor coordenador = obterCoordenador(usuarioDetails);
+            Reuniao sessao = reuniaoService.buscarPorIdComPauta(id);
+            
+            if (sessao == null) {
+                throw new RuntimeException("Sessão não encontrada");
+            }
+            
+            // Verificar se o coordenador tem permissão para excluir esta sessão
+            if (!sessao.getCoordenador().getId().equals(coordenador.getId())) {
+                throw new RuntimeException("Acesso negado. Apenas o coordenador responsável pode excluir esta sessão.");
+            }
+            
+            // Não permitir excluir sessões já encerrdas
+            if (sessao.getStatus() == StatusReuniao.ENCERRADA) {
+                throw new RuntimeException("Não é possível excluir sessões já encerradas.");
+            }
+            
+            reuniaoService.excluirSessao(id);
+            
+            redirectAttributes.addFlashAttribute("success", "✅ Sessão excluída com sucesso!");
+            return "redirect:/coordenador/sessoes";
+            
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", "❌ Erro ao excluir sessão: " + e.getMessage());
+            return "redirect:/coordenador/sessoes";
+        }
+    }
+
+    @PostMapping("/sessao/{id}/encerrar")
+    @Transactional
+    public String encerrarSessao(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UsuarioDetails usuarioDetails,
+            RedirectAttributes redirectAttributes
+    ) {
+        try {
+            Professor coordenador = obterCoordenador(usuarioDetails);
+            Reuniao sessao = reuniaoService.buscarPorId(id);
+            
+            if (sessao == null) {
+                throw new RuntimeException("Sessão não encontrada");
+            }
+            
+            // Verificar se o coordenador tem permissão para encerrar esta sessão
+            if (!sessao.getCoordenador().getId().equals(coordenador.getId())) {
+                throw new RuntimeException("Acesso negado. Apenas o coordenador responsável pode encerrar esta sessão.");
+            }
+            
+            // Não permitir encerrar sessões já encerradas
+            if (sessao.getStatus() == StatusReuniao.ENCERRADA) {
+                throw new RuntimeException("Esta sessão já está encerrada.");
+            }
+            
+            // Não permitir encerrar sessões que ainda não iniciaram
+            if (sessao.getStatus() == StatusReuniao.PROGRAMADA) {
+                throw new RuntimeException("Não é possível encerrar uma sessão que ainda não foi iniciada.");
+            }
+            
+            // Verificar se há processos em julgamento
+            long processosEmJulgamento = sessao.getPauta().stream()
+                    .filter(p -> p.getStatus() == StatusProcessoEnum.EM_JULGAMENTO)
+                    .count();
+            
+            if (processosEmJulgamento > 0) {
+                throw new RuntimeException("Não é possível encerrar a sessão. Há " + processosEmJulgamento + " processo(s) ainda em julgamento. Conclua todos os julgamentos antes de encerrar.");
+            }
+            
+            reuniaoService.encerrarSessao(id);
+            
+            redirectAttributes.addFlashAttribute("success", "✅ Sessão encerrada com sucesso! Nenhuma alteração nos processos pode mais ser realizada.");
+            return "redirect:/coordenador/sessao/" + id;
+            
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", "❌ Erro ao encerrar sessão: " + e.getMessage());
+            return "redirect:/coordenador/sessao/" + id;
+        }
+    }
+
+    @PostMapping("/sessao/{reuniaoId}/processo/{processoId}/remover")
+    @Transactional
+    public String removerProcessoDaPauta(
+            @PathVariable Long reuniaoId,
+            @PathVariable Long processoId,
+            @AuthenticationPrincipal UsuarioDetails usuarioDetails,
+            RedirectAttributes redirectAttributes
+    ) {
+        try {
+            Professor coordenador = obterCoordenador(usuarioDetails);
+            Reuniao sessao = reuniaoService.buscarPorId(reuniaoId);
+            
+            if (!sessao.getCoordenador().getId().equals(coordenador.getId())) {
+                throw new RuntimeException("Acesso negado.");
+            }
+            
+            reuniaoService.removerProcessoDaPauta(reuniaoId, processoId);
+            redirectAttributes.addFlashAttribute("success", "✅ Processo removido da pauta!");
+            
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", "❌ " + e.getMessage());
+        }
+        
+        return "redirect:/coordenador/sessao/" + reuniaoId;
+    }
+
+    @PostMapping("/sessao/{reuniaoId}/processo/{processoId}/julgar")
+    @Transactional
+    public String iniciarJulgamentoProcesso(
+            @PathVariable Long reuniaoId,
+            @PathVariable Long processoId,
+            @AuthenticationPrincipal UsuarioDetails usuarioDetails,
+            RedirectAttributes redirectAttributes
+    ) {
+        try {
+            Professor coordenador = obterCoordenador(usuarioDetails);
+            Reuniao sessao = reuniaoService.buscarPorId(reuniaoId);
+            
+            if (!sessao.getCoordenador().getId().equals(coordenador.getId())) {
+                throw new RuntimeException("Acesso negado.");
+            }
+            
+            if (sessao.getStatus() == StatusReuniao.ENCERRADA) {
+                throw new RuntimeException("Não é possível iniciar julgamento. A sessão já foi encerrada.");
+            }
+            
+            reuniaoService.iniciarJulgamentoProcesso(reuniaoId, processoId);
+            return "redirect:/coordenador/sessao/" + reuniaoId + "/processo/" + processoId + "/julgamento";
+            
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/coordenador/sessao/" + reuniaoId;
+        }
+    }
+
+    @PostMapping("/sessao/{sessaoId}/processo/{processoId}/concluir")
+    @Transactional
+    public String concluirJulgamento(@PathVariable Long sessaoId,
+                                     @PathVariable Long processoId,
+                                     @AuthenticationPrincipal UsuarioDetails usuarioDetails,
+                                     RedirectAttributes redirectAttributes) {
+
+        try {
+            Professor coordenador = obterCoordenador(usuarioDetails);
+            Reuniao sessao = reuniaoRepository.findById(sessaoId)
+                    .orElseThrow(() -> new RuntimeException("Sessão não encontrada"));
+            
+
+            // Validar que a sessão não está encerrada
+            if (sessao.getStatus() == StatusReuniao.ENCERRADA) {
+                redirectAttributes.addFlashAttribute("error", "Não é possível concluir julgamento. A sessão já foi encerrada.");
+                return "redirect:/coordenador/sessao/" + sessaoId + "/processo/" + processoId + "/julgamento";
+            }//Validar que é o coordenador da sessão
+            if (!sessao.getCoordenador().getId().equals(coordenador.getId())) {
+                redirectAttributes.addFlashAttribute("error", "Apenas o coordenador pode concluir julgamentos");
+                return "redirect:/coordenador/sessao/" + sessaoId;
+            }
+            
+            Optional<Processo> processoOpt = processoRepository.findById(processoId);
+            if (processoOpt.isPresent()) {
+                Processo processo = processoOpt.get();
+
+                // Calcular resultado final baseado nos votos (membros que votaram + decisão do relator)
+                List<Voto> votos = votoRepository.findByProcessoId(processoId);
+                
+                long votosDeferidos = votos.stream()
+                        .filter(v -> v.getVoto() == TipoDecisao.DEFERIMENTO)
+                        .count();
+                
+                long votosIndeferidos = votos.stream()
+                        .filter(v -> v.getVoto() == TipoDecisao.INDEFERIMENTO)
+                        .count();
+                
+                // Adicionar decisão do relator à contagem
+                if (processo.getDecisaoRelator() != null) {
+                    if (processo.getDecisaoRelator() == TipoDecisao.DEFERIMENTO) {
+                        votosDeferidos++;
+                    } else if (processo.getDecisaoRelator() == TipoDecisao.INDEFERIMENTO) {
+                        votosIndeferidos++;
+                    }
+                }
+
+                // Determinar resultado final
+                TipoDecisao decisaoFinal;
+                if (votosDeferidos > votosIndeferidos) {
+                    decisaoFinal = TipoDecisao.DEFERIMENTO;
+                    
+                    // Atualizar processo com decisão final
+                    processo.setDecisaoFinal(decisaoFinal);
+                    processo.setStatus(StatusProcessoEnum.JULGADO);
+                    processoRepository.save(processo);
+                    
+                    redirectAttributes.addFlashAttribute("success", "✅ Julgamento concluído! Resultado: " + decisaoFinal.name());
+                    
+                } else if (votosIndeferidos > votosDeferidos) {
+                    decisaoFinal = TipoDecisao.INDEFERIMENTO;
+                    
+                    // Atualizar processo com decisão final
+                    processo.setDecisaoFinal(decisaoFinal);
+                    processo.setStatus(StatusProcessoEnum.JULGADO);
+                    processoRepository.save(processo);
+                    
+                    redirectAttributes.addFlashAttribute("success", "✅ Julgamento concluído! Resultado: " + decisaoFinal.name());
+                    
+                } else {
+                    // Empate: coordenador precisa desempatar
+                    redirectAttributes.addFlashAttribute("error", "⚖️ Empate detectado! Como coordenador, você deve exercer o voto de minerva para desempatar.");
+                    redirectAttributes.addFlashAttribute("empate", true);
+                    redirectAttributes.addFlashAttribute("votosDeferidos", votosDeferidos);
+                    redirectAttributes.addFlashAttribute("votosIndeferidos", votosIndeferidos);
+                }
+            } else {
+                redirectAttributes.addFlashAttribute("error", "Processo não encontrado.");
+            }
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", "❌ Erro: " + e.getMessage());
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "❌ Erro inesperado ao concluir julgamento");
+        }
+
+        return "redirect:/coordenador/sessao/" + sessaoId + "/processo/" + processoId + "/julgamento";
+    }
+
+
+    @PostMapping("/sessao/{sessaoId}/processo/{processoId}/voto-minerva")
+    @Transactional
+    public String votoDeMinerva(@PathVariable Long sessaoId,
+                                @PathVariable Long processoId,
+                                @RequestParam String decisao,
+                                @AuthenticationPrincipal UsuarioDetails usuarioDetails,
+                                RedirectAttributes redirectAttributes) {
+        try {
+            Professor coordenador = obterCoordenador(usuarioDetails);
+            Reuniao sessao = reuniaoRepository.findById(sessaoId)
+                    .orElseThrow(() -> new RuntimeException("Sessão não encontrada"));
+            
+            if (!sessao.getCoordenador().getId().equals(coordenador.getId())) {
+                redirectAttributes.addFlashAttribute("error", "Apenas o coordenador pode exercer o voto de minerva");
+                return "redirect:/coordenador/sessao/" + sessaoId + "/processo/" + processoId + "/julgamento";
+            }
+            
+            if (sessao.getStatus() == StatusReuniao.ENCERRADA) {
+                redirectAttributes.addFlashAttribute("error", "Não é possível votar. A sessão já foi encerrada.");
+                return "redirect:/coordenador/sessao/" + sessaoId + "/processo/" + processoId + "/julgamento";
+            }
+            
+            Processo processo = processoRepository.findById(processoId)
+                    .orElseThrow(() -> new RuntimeException("Processo não encontrado"));
+            
+            // Validar que a decisão é válida
+            TipoDecisao decisaoFinal;
+            try {
+                decisaoFinal = TipoDecisao.valueOf(decisao);
+            } catch (IllegalArgumentException e) {
+                redirectAttributes.addFlashAttribute("error", "Decisão inválida");
+                return "redirect:/coordenador/sessao/" + sessaoId + "/processo/" + processoId + "/julgamento";
+            }
+            
+            // Atualizar processo com decisão final do voto de minerva
+            processo.setDecisaoFinal(decisaoFinal);
+            processo.setStatus(StatusProcessoEnum.JULGADO);
+            processoRepository.save(processo);
+            
+            redirectAttributes.addFlashAttribute("success", 
+                "✅ Julgamento concluído com voto de minerva! Resultado: " + decisaoFinal.name());
+            
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", "❌ Erro: " + e.getMessage());
+        }
+        
+        return "redirect:/coordenador/sessao/" + sessaoId + "/processo/" + processoId + "/julgamento";
+    }
+
+    @GetMapping("/sessao/{sessaoId}/processo/{processoId}/julgamento")
+    @Transactional(readOnly = true)
+    public String julgamentoProcesso(@PathVariable Long sessaoId,
+                                     @PathVariable Long processoId,
+                                     Model model,
+                                     @AuthenticationPrincipal UsuarioDetails usuario) {
+
+        System.out.println("============================chegour aqui=============================");
+
+        Reuniao sessao = reuniaoService.buscarPorId(sessaoId);
+        Processo processo = processoService.buscarPorId(processoId);
+
+        // Mapear votos por membro
+        List<VotoMembroDTO> votosMembros = sessao.getMembros().stream()
+                .map(membro -> {
+                    Voto voto = processo.getVotos().stream()
+                            .filter(v -> v.getProfessor() != null && v.getProfessor().getId().equals(membro.getId()))
+                            .findFirst()
+                            .orElse(null);
+                    return new VotoMembroDTO(membro, voto);
+                })
+                .toList();
+
+        // Relator não pode votar
+        boolean ehRelator = processo.getRelator() != null && 
+                           processo.getRelator().getId().equals(usuario.getUsuario().getId());
+        
+        model.addAttribute("podeVotar", !ehRelator && votosMembros.stream()
+                .anyMatch(v -> v.getMembro().getId().equals(usuario.getUsuario().getId()) && v.getVoto() == null
+                        && processo.getStatus() == StatusProcessoEnum.EM_JULGAMENTO));
+
+
+        // Flag para saber se é coordenador
+        boolean ehCoordenador = usuario.getUsuario().getId().equals(sessao.getCoordenador().getId());
+        
+        // Verificar se há empate nos votos
+        if (processo.getStatus() == StatusProcessoEnum.EM_JULGAMENTO) {
+            List<Voto> votos = votoRepository.findByProcessoId(processoId);
+            long votosDeferidos = votos.stream()
+                    .filter(v -> v.getVoto() == TipoDecisao.DEFERIMENTO)
+                    .count();
+            long votosIndeferidos = votos.stream()
+                    .filter(v -> v.getVoto() == TipoDecisao.INDEFERIMENTO)
+                    .count();
+            
+            model.addAttribute("votosDeferidos", votosDeferidos);
+            model.addAttribute("votosIndeferidos", votosIndeferidos);
+        }
+
+        model.addAttribute("sessao", sessao);
+        model.addAttribute("processo", processo);
+        model.addAttribute("usuario", usuario.getUsuario());
+        model.addAttribute("ehCoordenador", ehCoordenador);
+        model.addAttribute("votosMembros", votosMembros);
+
+        System.out.println("votosMembros: " + votosMembros);
+
+        return "reuniao/julgamento-processo";
+    }
+
+
+    private Professor obterCoordenador(UsuarioDetails usuarioDetails) {
+        Long coordenadorId = usuarioDetails.getUsuario().getId();
+        Professor coordenador = (Professor) usuarioRepository.findById(coordenadorId)
+                .orElseThrow(() -> new RuntimeException("Coordenador não encontrado"));
+        
+        if (!coordenador.isEhCoordenador()) {
+            throw new RuntimeException("Acesso negado. Apenas coordenadores podem acessar esta funcionalidade.");
+        }
+        return coordenador;
+    }
+
+    private Long obterColegiadoId(Professor coordenador) {
+        return coordenador.getColegiados().stream()
+                .findFirst()
+                .map(colegiado -> colegiado.getId())
+                .orElseThrow(() -> new RuntimeException("Coordenador não possui colegiado associado"));
     }
 }

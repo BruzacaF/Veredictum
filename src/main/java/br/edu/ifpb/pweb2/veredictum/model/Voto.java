@@ -1,8 +1,11 @@
 package br.edu.ifpb.pweb2.veredictum.model;
 
-import br.edu.ifpb.pweb2.veredictum.enums.TipoVoto;
+import br.edu.ifpb.pweb2.veredictum.enums.TipoDecisao;
 import jakarta.persistence.*;
 import lombok.Data;
+import org.hibernate.annotations.CreationTimestamp;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Data
@@ -11,7 +14,7 @@ public class Voto {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    private TipoVoto voto;
+    private TipoDecisao voto;
 
     @Lob
     private String justificativa;
@@ -21,4 +24,7 @@ public class Voto {
 
     @ManyToOne
     private Processo processo;
+
+    @CreationTimestamp
+    private LocalDateTime dataVoto;
 }

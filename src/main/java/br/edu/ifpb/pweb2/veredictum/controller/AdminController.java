@@ -1,5 +1,6 @@
 package br.edu.ifpb.pweb2.veredictum.controller;
 
+import br.edu.ifpb.pweb2.veredictum.dto.UsuarioDTO;
 import br.edu.ifpb.pweb2.veredictum.enums.RoleEnum;
 import br.edu.ifpb.pweb2.veredictum.model.Aluno;
 import br.edu.ifpb.pweb2.veredictum.model.Assunto;
@@ -10,12 +11,14 @@ import br.edu.ifpb.pweb2.veredictum.security.UsuarioDetails;
 import br.edu.ifpb.pweb2.veredictum.service.AssuntoService;
 import br.edu.ifpb.pweb2.veredictum.service.UsuarioService;
 import br.edu.ifpb.pweb2.veredictum.service.ColegiadoService;
+import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
+import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -95,15 +98,41 @@ public class AdminController {
     }
 
     @PostMapping("/usuario")
-    public String criarUsuario(@ModelAttribute Usuario usuario,
-                               @RequestParam(required = false) String matricula,
+    public String criarUsuario(@Valid @ModelAttribute UsuarioDTO usuarioDTO,
+                               BindingResult bindingResult,
                                RedirectAttributes redirectAttributes) {
         try {
-            if (usuarioService.emailExiste(usuario.getEmail())) {
+            // Valida se a matrícula é obrigatória para a role selecionada
+            if (usuarioDTO.requiresMatricula() && 
+                (usuarioDTO.getMatricula() == null || usuarioDTO.getMatricula().trim().isEmpty())) {
+                bindingResult.rejectValue("matricula", "error.matricula", 
+                    "A matrícula é obrigatória para " + usuarioDTO.getRole());
+            }
+            
+            // Se houver erros de validação, retorna com mensagem
+            if (bindingResult.hasErrors()) {
+                StringBuilder errorMsg = new StringBuilder("Erro de validação: ");
+                for (FieldError error : bindingResult.getFieldErrors()) {
+                    errorMsg.append(error.getDefaultMessage()).append("; ");
+                }
+                redirectAttributes.addFlashAttribute("error", errorMsg.toString());
+                return "redirect:/admin";
+            }
+            
+            if (usuarioService.emailExiste(usuarioDTO.getEmail())) {
                 redirectAttributes.addFlashAttribute("error", "Email já cadastrado!");
                 return "redirect:/admin";
             }
-            usuarioService.salvar(usuario, matricula);
+            
+            // Converte DTO para entidade
+            Usuario usuario = new Usuario();
+            usuario.setNome(usuarioDTO.getNome());
+            usuario.setEmail(usuarioDTO.getEmail());
+            usuario.setTelefone(usuarioDTO.getTelefone());
+            usuario.setSenha(usuarioDTO.getSenha());
+            usuario.setRole(usuarioDTO.getRole());
+            
+            usuarioService.salvar(usuario, usuarioDTO.getMatricula());
             redirectAttributes.addFlashAttribute("success", "Usuário criado com sucesso!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Erro ao criar usuário: " + e.getMessage());
@@ -113,15 +142,40 @@ public class AdminController {
 
     @PostMapping("/usuario/update")
     public String atualizarUsuario(@RequestParam Long id,
-                                   @ModelAttribute Usuario usuario,
-                                   @RequestParam(required = false) String matricula,
+                                   @Valid @ModelAttribute UsuarioDTO usuarioDTO,
+                                   BindingResult bindingResult,
                                    RedirectAttributes redirectAttributes) {
         try {
-            if (usuarioService.emailExiste(usuario.getEmail(), id)) {
+            // Valida se a matrícula é obrigatória para a role selecionada
+            if (usuarioDTO.requiresMatricula() && 
+                (usuarioDTO.getMatricula() == null || usuarioDTO.getMatricula().trim().isEmpty())) {
+                bindingResult.rejectValue("matricula", "error.matricula", 
+                    "A matrícula é obrigatória para " + usuarioDTO.getRole());
+            }
+            
+            // Se houver erros de validação, retorna com mensagem
+            if (bindingResult.hasErrors()) {
+                StringBuilder errorMsg = new StringBuilder("Erro de validação: ");
+                for (FieldError error : bindingResult.getFieldErrors()) {
+                    errorMsg.append(error.getDefaultMessage()).append("; ");
+                }
+                redirectAttributes.addFlashAttribute("error", errorMsg.toString());
+                return "redirect:/admin";
+            }
+            
+            if (usuarioService.emailExiste(usuarioDTO.getEmail(), id)) {
                 redirectAttributes.addFlashAttribute("error", "Email já cadastrado para outro usuário!");
                 return "redirect:/admin";
             }
-            usuarioService.atualizar(id, usuario, matricula);
+            
+            // Converte DTO para entidade
+            Usuario usuario = new Usuario();
+            usuario.setNome(usuarioDTO.getNome());
+            usuario.setEmail(usuarioDTO.getEmail());
+            usuario.setTelefone(usuarioDTO.getTelefone());
+            usuario.setRole(usuarioDTO.getRole());
+            
+            usuarioService.atualizar(id, usuario, usuarioDTO.getMatricula());
             redirectAttributes.addFlashAttribute("success", "Usuário atualizado com sucesso!");
         } catch (Exception e) {
             redirectAttributes.addFlashAttribute("error", "Erro ao atualizar usuário: " + e.getMessage());

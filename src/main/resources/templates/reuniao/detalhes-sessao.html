@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Detalhes da Sessão - Veredictum</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body class="bg-light">
+
+<header class="bg-primary text-white shadow-sm mb-4">
+    <nav class="container d-flex justify-content-between align-items-center py-3">
+        <h2 class="h4 mb-0">
+            <i class="bi bi-calendar-event"></i> Detalhes da Sessão
+        </h2>
+        <ul class="nav">
+            <li class="nav-item">
+                <span class="navbar-text text-white me-3">
+                    <i class="bi bi-person-circle"></i>
+                    <span th:text="${usuario.nome}">Professor</span>
+                </span>
+            </li>
+            <li class="nav-item" th:if="${ehCoordenador}">
+                <a class="nav-link text-white fw-bold" th:href="@{/coordenador/sessoes}">
+                    <i class="bi bi-arrow-left"></i> Voltar
+                </a>
+            </li>
+            <li class="nav-item" th:unless="${ehCoordenador}">
+                <a class="nav-link text-white fw-bold" th:href="@{/home/professor}">
+                    <i class="bi bi-arrow-left"></i> Voltar
+                </a>
+            </li>
+            <li class="nav-item">
+                <a class="nav-link text-white fw-bold" th:href="@{/home}">
+                    <i class="bi bi-house"></i> Início
+                </a>
+            </li>
+            <form th:action="@{/logout}" method="post" class="ms-3">
+                <button type="submit" class="btn btn-outline-light btn-sm px-3">Sair</button>
+            </form>
+        </ul>
+    </nav>
+</header>
+
+<div class="container py-4">
+    <!-- Mensagens de sucesso e erro -->
+    <div class="alert alert-success alert-dismissible fade show" th:if="${success}">
+        <i class="bi bi-check-circle"></i> <span th:text="${success}"></span>
+        <button class="btn-close" data-bs-dismiss="alert" type="button"></button>
+    </div>
+    <div class="alert alert-danger alert-dismissible fade show" th:if="${error}">
+        <i class="bi bi-exclamation-triangle"></i> <span th:text="${error}"></span>
+        <button class="btn-close" data-bs-dismiss="alert" type="button"></button>
+    </div>
+    
+    <!-- Informações Gerais da Sessão -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-info-circle"></i> Informações da Sessão</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <p><strong><i class="bi bi-calendar3"></i> Data:</strong> 
+                        <span th:text="${#temporals.format(sessao.data, 'dd/MM/yyyy')}">20/11/2025</span>
+                    </p>
+                    <p><strong><i class="bi bi-clock"></i> Horário:</strong> 
+                        <span th:text="${#temporals.format(sessao.data, 'HH:mm')}">14:00</span>
+                    </p>
+                </div>
+                <div class="col-md-6">
+                    <p><strong><i class="bi bi-person-badge"></i> Coordenador:</strong> 
+                        <span th:text="${sessao.coordenador.nome}">Nome do Coordenador</span>
+                    </p>
+                    <p><strong><i class="bi bi-flag"></i> Status:</strong>
+                        <span class="badge ms-2" 
+                              th:classappend="${sessao.status.name() == 'PROGRAMADA' ? 'bg-info' : 
+                                             sessao.status.name() == 'REALIZADA' ? 'bg-success' : 'bg-secondary'}"
+                              th:text="${sessao.status.name()}">
+                            Status
+                        </span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Membros Participantes -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0"><i class="bi bi-people"></i> Membros Participantes</h5>
+        </div>
+        <div class="card-body">
+            <div th:if="${sessao.membros.isEmpty()}" class="alert alert-info">
+                <i class="bi bi-info-circle"></i> Nenhum membro registrado para esta sessão.
+            </div>
+            <div th:unless="${sessao.membros.isEmpty()}" class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nome</th>
+                            <th>Matrícula</th>
+                            <th>Email</th>
+                            <th>Função</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="membro : ${sessao.membros}">
+                            <td th:text="${membro.nome}">Nome do Professor</td>
+                            <td th:text="${membro.matricula}">SIAPE001</td>
+                            <td th:text="${membro.email}">email@ifpb.edu.br</td>
+                            <td>
+                                <span th:if="${membro.id == sessao.coordenador.id}" 
+                                      class="badge bg-primary">
+                                    <i class="bi bi-star-fill"></i> Coordenador
+                                </span>
+                                <span th:unless="${membro.id == sessao.coordenador.id}" 
+                                      class="badge bg-secondary">
+                                    <i class="bi bi-person"></i> Membro
+                                </span>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Processos na Pauta -->
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-success text-white">
+            <h5 class="mb-0"><i class="bi bi-folder2-open"></i> Processos na Pauta</h5>
+        </div>
+        <div class="card-body">
+            <div th:if="${sessao.pauta.isEmpty()}" class="alert alert-info">
+                <i class="bi bi-info-circle"></i> Nenhum processo na pauta desta sessão.
+            </div>
+            <div th:unless="${sessao.pauta.isEmpty()}" class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Número</th>
+                            <th>Assunto</th>
+                            <th>Aluno</th>
+                            <th>Matrícula</th>
+                            <th>Relator</th>
+                            <th>Status</th>
+                            <th>Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="processo : ${sessao.pauta}">
+                            <td>
+                                <strong th:text="${processo.numero}">2024/001</strong>
+                            </td>
+                            <td th:text="${processo.assunto?.nome}">Assunto</td>
+                            <td th:text="${processo.aluno?.nome}">Nome do Aluno</td>
+                            <td th:text="${processo.aluno?.matricula}">20221001</td>
+                            <td>
+                                <span th:if="${processo.relator != null}" 
+                                      th:text="${processo.relator.nome}">
+                                    Nome do Relator
+                                </span>
+                                <span th:unless="${processo.relator != null}" 
+                                      class="text-muted fst-italic">
+                                    Não atribuído
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge" 
+                                      th:classappend="${processo.status.name() == 'EM_PAUTA' ? 'bg-warning text-dark' : 
+                                                     processo.status.name() == 'EM_JULGAMENTO' ? 'bg-info' :
+                                                     processo.status.name() == 'JULGADO' ? 'bg-success' : 'bg-secondary'}"
+                                      th:text="${processo.status.name()}">
+                                    Status
+                                </span>
+                            </td>
+                            <td>
+                                <!-- Botão Visualizar: sempre visível para todos -->
+                                <a th:href="@{/reuniao/{reuniaoId}/processo/{processoId}/visualizar(reuniaoId=${sessao.id},processoId=${processo.id})}"
+                                   class="btn btn-sm btn-outline-primary"
+                                   title="Ver julgamento">
+                                    <i class="bi bi-eye"></i> Visualizar
+                                </a>
+                                
+                                <!-- Ações exclusivas do COORDENADOR -->
+                                <th:block th:if="${ehCoordenador}">
+                                    <th:block th:with="existeEmJulgamento=${sessao.pauta.?[status.name() == 'EM_JULGAMENTO'].size() > 0}">
+                                        <!-- Botão Iniciar Julgamento: só aparece se não há outro processo em julgamento E sessão está EM_ANDAMENTO -->
+                                        <button th:if="${!existeEmJulgamento && processo.status.name() == 'EM_PAUTA' && sessao.status.name() == 'EM_ANDAMENTO'}"
+                                                type="button" 
+                                                class="btn btn-sm btn-success ms-1" 
+                                                title="Iniciar julgamento"
+                                                onclick="iniciarJulgamento(this)"
+                                                th:data-reuniao-id="${sessao.id}"
+                                                th:data-processo-id="${processo.id}"
+                                                th:data-numero="${processo.numero}">
+                                            <i class="bi bi-play-fill"></i>
+                                        </button>
+                                        
+                                        <!-- Remover da Pauta: só para processos ainda EM_PAUTA e sessão não encerrada -->
+                                        <button th:if="${processo.status.name() == 'EM_PAUTA' && sessao.status.name() != 'ENCERRADA'}"
+                                                type="button" 
+                                                class="btn btn-sm btn-outline-danger ms-1" 
+                                                title="Retirar de pauta"
+                                                onclick="removerDaPauta(this)"
+                                                th:data-reuniao-id="${sessao.id}"
+                                                th:data-processo-id="${processo.id}"
+                                                th:data-numero="${processo.numero}">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </th:block>
+                                </th:block>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Botões de Ação -->
+    <div class="d-flex justify-content-start">
+        <a th:href="@{${ehCoordenador ? '/coordenador/sessoes' : '/home/professor'}}" class="btn btn-secondary">
+            <i class="bi bi-arrow-left"></i> <span th:text="${ehCoordenador ? 'Voltar para Sessões' : 'Voltar para Dashboard'}">Voltar</span>
+        </a>
+    </div>
+</div>
+
+<!-- Modal removido - agora usa página dedicada -->
+
+<div th:replace="~{layout/footer :: footer}"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script th:if="${ehCoordenador}">
+function removerDaPauta(button) {
+    const reuniaoId = button.getAttribute('data-reuniao-id');
+    const processoId = button.getAttribute('data-processo-id');
+    const processoNumero = button.getAttribute('data-numero');
+    
+    if (confirm(`Tem certeza que deseja retirar o processo ${processoNumero} da pauta?\n\nEle voltará ao status DISTRIBUÍDO.`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/coordenador/sessao/${reuniaoId}/processo/${processoId}/remover`;
+        
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content || 
+                         document.querySelector('input[name="_csrf"]')?.value;
+        
+        if (csrfToken) {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_csrf';
+            csrfInput.value = csrfToken;
+            form.appendChild(csrfInput);
+        }
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+
+function iniciarJulgamento(button) {
+    const reuniaoId = button.getAttribute('data-reuniao-id');
+    const processoId = button.getAttribute('data-processo-id');
+    const processoNumero = button.getAttribute('data-numero');
+    
+    if (confirm(`Iniciar julgamento do processo ${processoNumero}?`)) {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/coordenador/sessao/${reuniaoId}/processo/${processoId}/julgar`;
+        
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content || 
+                         document.querySelector('input[name="_csrf"]')?.value;
+        
+        if (csrfToken) {
+            const csrfInput = document.createElement('input');
+            csrfInput.type = 'hidden';
+            csrfInput.name = '_csrf';
+            csrfInput.value = csrfToken;
+            form.appendChild(csrfInput);
+        }
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
+}
+</script>
+
+<script>
+// Script para abrir modal de detalhes do processo (para todos os usuários)
+document.addEventListener("DOMContentLoaded", () => {
+    const modalEl = document.getElementById("modalProcesso");
+    const modalBody = document.getElementById("modalProcessoBody");
+    const modal = new bootstrap.Modal(modalEl);
+
+    document.addEventListener("click", async (event) => {
+        const btn = event.target.closest(".btn-detalhes");
+        if (!btn) return;
+
+        event.preventDefault();
+
+        const id = btn.dataset.id;
+        if (!id) return;
+
+        modalBody.innerHTML = `
+            <div class="text-center text-muted py-5">
+                <div class="spinner-border mb-2" role="status"></div>
+                <div>Carregando detalhes do processo...</div>
+            </div>
+        `;
+
+        modal.show();
+
+        try {
+            const resp = await fetch(`/processo/${id}/modal`, {
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+
+            if (!resp.ok) {
+                throw new Error("Erro ao carregar modal");
+            }
+
+            const html = await resp.text();
+            modalBody.innerHTML = html;
+
+        } catch (e) {
+            console.error(e);
+            modalBody.innerHTML = `
+                <div class="alert alert-danger small text-center">
+                    <i class="bi bi-exclamation-triangle me-1"></i>
+                    Não foi possível carregar os dados do processo.
+                </div>
+            `;
+        }
+    });
+});
+</script>
+</body>
+</html>

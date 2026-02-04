@@ -1,73 +1,221 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
-<head>
-    <meta charset="UTF-8">
-    <title>Dashboard do Aluno</title>
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{layout/base}">
 
-    <!-- Bootstrap -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
+<th:block layout:fragment="title">
+    Dashboard do Aluno - Veredictum
+</th:block>
 
-<body class="bg-light">
+<section layout:fragment="conteudo">
 
-<!-- Header Fragment -->
-<div th:replace="~{layout/header :: header(usuario=${usuario})}"></div>
 
-<div class="container py-4">
-    <div th:replace="~{fragments/form-processo :: form-processo(usuario=${usuario}, assuntos=${assuntos}, processoDTO=${processoDTO})}"></div>
+    <div class="container py-4">
 
-    <div th:replace="fragments/painelProcessos :: painel-processos"></div>
+        <!-- Flash messages -->
+        <div th:if="${success}"
+             class="alert alert-flash alert-success small text-center py-2 rounded-3 shadow-sm" >
+            <i class="bi bi-check-circle me-1"></i>
+            <span th:text="${success}"></span>
+        </div>
 
-</div>
+        <div th:if="${error}"
+             class="alert alert-flash alert-danger small text-center py-2 rounded-3 shadow-sm" >
+            <i class="bi bi-exclamation-triangle me-1"></i>
+            <span th:text="${error}"></span>
+        </div>
 
-<!-- Footer Fragment -->
-<div th:replace="~{layout/footer :: footer}"></div>
+        <!-- CRIAR PROCESSO (TOPO) -->
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-body">
 
-<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-<script>
-    // Faz o flash desaparecer após 3 segundos
-    setTimeout(function() {
-        const msg = document.getElementById("flash-message-success");
-        const err = document.getElementById("flash-message-error");
-        if (msg) msg.style.display = "none";
-        if (err) err.style.display = "none";
-    }, 3000);
+                <div class="d-flex align-items-center mb-3">
+                    <div class="me-2 text-primary">
+                        <i class="bi bi-journal-plus fs-4"></i>
+                    </div>
+                    <div>
+                        <h6 class="fw-semibold mb-0">Novo Processo</h6>
+                        <small class="text-muted">
+                            Preencha os dados para iniciar um novo processo acadêmico
+                        </small>
+                    </div>
+                </div>
 
-    async function carregarTabelaComFiltros(paramsObject) {
-        const params = new URLSearchParams(paramsObject).toString();
-        try {
-            const resp = await fetch('/processo/listar?' + params, {
-                method: 'GET',
-                headers: {
-                    'X-Requested-With': 'XMLHttpRequest'
+                <div th:replace="~{fragments/form-processo :: form-processo(
+                        usuario=${usuario},
+                        assuntos=${assuntos},
+                        processoDTO=${processoDTO}
+                )}"></div>
+
+            </div>
+        </div>
+
+        <!-- LISTAGEM -->
+        <div class="card shadow-sm border-0">
+            <div class="card-body">
+
+                <div class="d-flex align-items-center mb-3">
+                    <div class="me-2 text-secondary">
+                        <i class="bi bi-folder2-open fs-5"></i>
+                    </div>
+                    <h6 class="fw-semibold mb-0">Meus Processos</h6>
+                </div>
+
+                <div th:replace="~{fragments/painel :: painel}"></div>
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MODAL -->
+    <div class="modal fade" id="modalProcesso" tabindex="-1">
+        <div class="modal-dialog modal-lg modal-dialog-centered">
+            <div class="modal-content">
+
+                <div class="modal-header">
+                    <h5 class="modal-title">Detalhes do Processo</h5>
+                    <button type="button"
+                            class="btn-close"
+                            data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body" id="modalProcessoBody"></div>
+
+            </div>
+        </div>
+    </div>
+
+</section>
+
+<!-- JS ESPECÍFICO -->
+<th:block layout:fragment="js-extra">
+
+    <script>
+        // Flash desaparece suavemente (mesma ideia do login)
+        setTimeout(() => {
+            document.querySelectorAll('.alert-flash').forEach(el => {
+                el.classList.add('fade');
+                el.style.opacity = '0';
+                setTimeout(() => el.remove(), 400);
+            });
+        }, 2500);
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+
+            // =========================
+            // Função para carregar tabela
+            // =========================
+            async function carregarTabelaComFiltros(paramsObject) {
+                const params = new URLSearchParams(paramsObject).toString();
+
+                try {
+                    const resp = await fetch('/processo/listar?' + params, {
+                        method: 'GET',
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+
+                    if (!resp.ok) {
+                        console.error('Resposta não OK:', resp.status, await resp.text());
+                        return;
+                    }
+
+                    const html = await resp.text();
+                    document.getElementById('tabela-container').innerHTML = html;
+                } catch (err) {
+                    console.error('Erro ao carregar tabela via AJAX:', err);
+                }
+            }
+
+            // =========================
+            // Paginação (delegação de evento)
+            // =========================
+            document.addEventListener("click", function(e) {
+                const btnPage = e.target.closest(".page-link");
+                if (!btnPage) return;
+
+                const page = btnPage.getAttribute("data-page");
+                if (page === null) return;
+
+                // mantém os filtros atuais
+                const assunto = document.getElementById('filtroAssunto')?.value || '';
+                const status = document.getElementById('filtroStatus')?.value || '';
+                const ordenacao = document.getElementById('filtroOrdenacao')?.value || 'DESC';
+
+                carregarTabelaComFiltros({ assunto, status, ordenacao, page });
+            });
+
+            // =========================
+            // Botão Filtrar
+            // =========================
+            document.getElementById('btnFiltrar')?.addEventListener('click', () => {
+                carregarTabelaComFiltros({
+                    assunto: document.getElementById('filtroAssunto')?.value || '',
+                    status: document.getElementById('filtroStatus')?.value || '',
+                    ordenacao: document.getElementById('filtroOrdenacao')?.value || 'DESC',
+                    page: 0
+                });
+            });
+
+            // =========================
+            // Modal Detalhes do Processo
+            // =========================
+            const modalEl = document.getElementById("modalProcesso");
+            const modalBody = document.getElementById("modalProcessoBody");
+            const modal = new bootstrap.Modal(modalEl);
+
+            document.addEventListener("click", async (event) => {
+                const btn = event.target.closest(".btn-detalhes");
+                if (!btn) return;
+
+                event.preventDefault();
+
+                const id = btn.dataset.id;
+                if (!id) return;
+
+                // Feedback imediato
+                modalBody.innerHTML = `
+                <div class="text-center text-muted py-5">
+                    <div class="spinner-border mb-2" role="status"></div>
+                    <div>Carregando detalhes do processo...</div>
+                </div>
+            `;
+
+                modal.show();
+
+                try {
+                    const resp = await fetch(`/processo/${id}/modal`, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    });
+
+                    if (!resp.ok) {
+                        throw new Error("Erro ao carregar modal");
+                    }
+
+                    const html = await resp.text();
+                    modalBody.innerHTML = html;
+
+                } catch (e) {
+                    console.error(e);
+                    modalBody.innerHTML = `
+                    <div class="alert alert-danger small text-center">
+                        <i class="bi bi-exclamation-triangle me-1"></i>
+                        Não foi possível carregar os dados do processo.
+                    </div>
+                `;
                 }
             });
 
-            if (!resp.ok) {
-                console.error('Resposta não OK:', resp.status, await resp.text());
-                return;
-            }
-
-            const html = await resp.text();
-            document.getElementById('tabela-container').innerHTML = html;
-        } catch (err) {
-            console.error('Erro ao carregar tabela via AJAX:', err);
-        }
-    }
-
-    // quando o botão for clicado, coleta filtros e chama AJAX
-    document.getElementById('btnFiltrar').addEventListener('click', function() {
-        const assunto = document.getElementById('filtroAssunto').value || '';
-        const status = document.getElementById('filtroStatus').value || '';
-        const ordenacao = document.getElementById('filtroOrdenacao').value;
-
-        carregarTabelaComFiltros({ assunto, status, ordenacao });
-
-        document.getElementById('filtroOrdenacao').value = ordenacao;
-    });
+        });
+    </script>
 
 
-</script>
+</th:block>
 
-</body>
 </html>

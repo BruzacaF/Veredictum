@@ -7,6 +7,8 @@ import br.edu.ifpb.pweb2.veredictum.model.Usuario;
 import br.edu.ifpb.pweb2.veredictum.repository.AlunoRepository;
 import br.edu.ifpb.pweb2.veredictum.repository.ProfessorRepository;
 import br.edu.ifpb.pweb2.veredictum.repository.UsuarioRepository;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validator;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -14,6 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 public class UsuarioService {
@@ -29,6 +32,9 @@ public class UsuarioService {
 
     @Autowired
     private PasswordEncoder passwordEncoder;
+    
+    @Autowired
+    private Validator validator;
 
     public List<Usuario> listarTodos() {
         return usuarioRepository.findAll();
@@ -60,6 +66,14 @@ public class UsuarioService {
             aluno.setSenha(usuario.getSenha());
             aluno.setRole(RoleEnum.ALUNO);
             aluno.setMatricula(matricula);
+            
+            // Valida a entidade antes de salvar
+            Set<ConstraintViolation<Aluno>> violations = validator.validate(aluno);
+            if (!violations.isEmpty()) {
+                String errorMsg = violations.iterator().next().getMessage();
+                throw new IllegalArgumentException(errorMsg);
+            }
+            
             return alunoRepository.save(aluno);
         } else if (role == RoleEnum.PROFESSOR || role == RoleEnum.COORDENADOR) {
             Professor professor = new Professor();
@@ -70,6 +84,14 @@ public class UsuarioService {
             professor.setRole(role);
             professor.setMatricula(matricula);
             professor.setEhCoordenador(role == RoleEnum.COORDENADOR);
+            
+            // Valida a entidade antes de salvar
+            Set<ConstraintViolation<Professor>> violations = validator.validate(professor);
+            if (!violations.isEmpty()) {
+                String errorMsg = violations.iterator().next().getMessage();
+                throw new IllegalArgumentException(errorMsg);
+            }
+            
             return professorRepository.save(professor);
         } else {
             return usuarioRepository.save(usuario);
@@ -92,9 +114,23 @@ public class UsuarioService {
             
             if (usuario instanceof Aluno) {
                 ((Aluno) usuario).setMatricula(matricula);
+                
+                // Valida a entidade antes de salvar
+                Set<ConstraintViolation<Aluno>> violations = validator.validate((Aluno) usuario);
+                if (!violations.isEmpty()) {
+                    String errorMsg = violations.iterator().next().getMessage();
+                    throw new IllegalArgumentException(errorMsg);
+                }
             } else if (usuario instanceof Professor) {
                 ((Professor) usuario).setMatricula(matricula);
                 ((Professor) usuario).setEhCoordenador(usuarioAtualizado.getRole() == RoleEnum.COORDENADOR);
+                
+                // Valida a entidade antes de salvar
+                Set<ConstraintViolation<Professor>> violations = validator.validate((Professor) usuario);
+                if (!violations.isEmpty()) {
+                    String errorMsg = violations.iterator().next().getMessage();
+                    throw new IllegalArgumentException(errorMsg);
+                }
             }
             
             usuario.setRole(usuarioAtualizado.getRole());

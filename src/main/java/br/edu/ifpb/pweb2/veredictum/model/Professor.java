@@ -1,6 +1,8 @@
 package br.edu.ifpb.pweb2.veredictum.model;
 
+import br.edu.ifpb.pweb2.veredictum.validation.MatriculaValida;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 import java.util.ArrayList;
@@ -13,11 +15,13 @@ import java.util.Set;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-@ToString(exclude = {"colegiados", "processosRelatados"}, callSuper = true)
+@ToString(exclude = {"colegiados", "processosRelatados", "reunioesCoordenadas", "reunioesParticipadas"}, callSuper = true)
 @EqualsAndHashCode(callSuper = true, onlyExplicitlyIncluded = true)
 public class Professor extends Usuario {
     
     @EqualsAndHashCode.Include
+    @NotBlank(message = "A matrícula é obrigatória")
+    @MatriculaValida(message = "Matrícula inválida. Use o formato YYYYNNNN (ex: 20241001)")
     private String matricula;
     
     private boolean ehCoordenador;
@@ -32,4 +36,10 @@ public class Professor extends Usuario {
 
     @OneToMany(mappedBy = "relator")
     private List<Processo> processosRelatados = new ArrayList<>();
+
+    @OneToMany(mappedBy = "coordenador")
+    private List<Reuniao> reunioesCoordenadas = new ArrayList<>();
+
+    @ManyToMany(mappedBy = "membros")
+    private Set<Reuniao> reunioesParticipadas = new HashSet<>();
 }

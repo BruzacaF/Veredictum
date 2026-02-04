@@ -2,25 +2,30 @@ package br.edu.ifpb.pweb2.veredictum.controller;
 
 import br.edu.ifpb.pweb2.veredictum.dto.ProcessoDTO;
 import br.edu.ifpb.pweb2.veredictum.dto.ProcessoDTOFiltro;
+import br.edu.ifpb.pweb2.veredictum.enums.StatusProcessoEnum;
 import br.edu.ifpb.pweb2.veredictum.model.Aluno;
 import br.edu.ifpb.pweb2.veredictum.model.Processo;
 import br.edu.ifpb.pweb2.veredictum.model.Professor;
 import br.edu.ifpb.pweb2.veredictum.model.Usuario;
+import br.edu.ifpb.pweb2.veredictum.model.Voto;
 import br.edu.ifpb.pweb2.veredictum.repository.AssuntoRepository;
 import br.edu.ifpb.pweb2.veredictum.repository.ProcessoRepository;
 import br.edu.ifpb.pweb2.veredictum.security.UsuarioDetails;
 import br.edu.ifpb.pweb2.veredictum.service.ProcessoService;
+import br.edu.ifpb.pweb2.veredictum.service.VotoService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
-import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import java.util.List;
 
 @Controller
 @RequestMapping("/processo")
@@ -32,6 +37,8 @@ public class ProcessoController {
     private ProcessoRepository processoRepository;
     @Autowired
     private AssuntoRepository assuntoRepository;
+    @Autowired
+    private VotoService votoService;
 
     @PostMapping("/adicionar")
     public String adicionarProcesso(@Valid @ModelAttribute ProcessoDTO processo,
@@ -40,12 +47,7 @@ public class ProcessoController {
                                     @AuthenticationPrincipal UsuarioDetails usuarioDetails,
                                     Model model) {
         if (result.hasErrors()) {
-            for (FieldError error : result.getFieldErrors()){
-                System.out.println(error.getField() + ": " + error.getDefaultMessage());
-                redirectAttributes.addFlashAttribute("error_" + error.getField(), error.getDefaultMessage());
-            }
-            redirectAttributes.addFlashAttribute("processoDTO", processo);
-            return "redirect:/home/aluno";
+            return "aluno/dashboard";
         }
 
             try {
@@ -58,11 +60,34 @@ public class ProcessoController {
             return "redirect:/home/aluno";
         };
 
+    //UPLOAD DE ARQUIVOS PARA PROCESSO ALUNO
+    @PostMapping("/{id}/arquivo")
+    public String uploadArquivo(@PathVariable Long id,
+                                @RequestParam("arquivo") MultipartFile arquivo,
+                                RedirectAttributes redirectAttributes,
+                                @AuthenticationPrincipal UsuarioDetails usuario) throws Exception {
+
+        if (arquivo.isEmpty()) {
+            redirectAttributes.addFlashAttribute("erro",
+                    "Nenhum arquivo foi selecionado.");
+            return "redirect:/home/aluno";
+        }
+
+        processoService.anexarArquivo(id, arquivo, usuario.getUsuario());
+
+        redirectAttributes.addFlashAttribute("sucesso",
+                "Arquivo enviado com sucesso.");
+
+        return "redirect:/home/aluno";
+    }
+
+
     @GetMapping("/listar")
     public String listar(
             @RequestParam(required = false) String assunto,
             @RequestParam(required = false) String status,
             @RequestParam(defaultValue = "DESC") String ordenacao,
+            @RequestParam(defaultValue = "0") int page,  // <-- novo
             @AuthenticationPrincipal UsuarioDetails usuarioDetails,
             @RequestHeader(value = "X-Requested-With", required = false) String requestedWith,
             Model model
@@ -75,19 +100,72 @@ public class ProcessoController {
 
         Usuario usuario = usuarioDetails.getUsuario();
 
-        List<Processo> processos = processoRepository.filtrar(
+        Pageable pageable = PageRequest.of(page, 5);
+
+        Page<Processo> processos = processoRepository.filtrar(
                 filtro,
                 usuario.getId(),
-                usuario.getRole()
+                usuario.getRole(),
+                pageable
         );
 
-        model.addAttribute("processos", processos);
+        model.addAttribute("itensTabela", processos.getContent());
+        model.addAttribute("paginaAtual", processos.getNumber());
+        model.addAttribute("totalPaginas", processos.getTotalPages());
 
         if ("XMLHttpRequest".equalsIgnoreCase(requestedWith)) {
-            return "fragments/tabela-processo :: tabela-processo";
+            return "fragments/tabela-processo-aluno :: tabela-processo";
         }
 
         return "processo/listar";
+    }
+
+
+
+
+    @GetMapping("/{id}/modal")
+    @Transactional(readOnly = true)
+    public String detalhesModal(@PathVariable Long id, Model model, @AuthenticationPrincipal UsuarioDetails usuario) {
+
+        Processo processo = processoService.buscarPorId(id);
+
+        int totalDocumentos = processo.getDocumentos().size();
+        int limite = 3;
+
+        boolean isAluno = usuario.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ALUNO"));
+
+        boolean isProfessor = usuario.getAuthorities()
+                .stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_PROFESSOR"));
+
+        boolean podeEnviarDocumento =
+                isAluno &&
+                processo.getStatus() == StatusProcessoEnum.CRIADO &&
+                        totalDocumentos < limite;
+        
+        // Verificar se o professor já votou
+        boolean jaVotou = false;
+        Voto votoExistente = null;
+        if (isProfessor) {
+            Professor professor = (Professor) usuario.getUsuario();
+            jaVotou = votoService.professorJaVotou(processo.getId(), professor.getId());
+            if (jaVotou) {
+                votoExistente = votoService.buscarVotoDoProfessor(professor, processo).orElse(null);
+            }
+        }
+
+        model.addAttribute("processo", processo);
+        model.addAttribute("totalDocumentos", totalDocumentos);
+        model.addAttribute("limiteDocumentos", limite);
+        model.addAttribute("podeEnviarDocumento", podeEnviarDocumento);
+        model.addAttribute("isProfessor", isProfessor);
+        model.addAttribute("jaVotou", jaVotou);
+        model.addAttribute("votoExistente", votoExistente);
+        model.addAttribute("limiteDocumentos", limite);
+        model.addAttribute("podeEnviarDocumento", podeEnviarDocumento);
+
+        return "fragments/modal-processo :: conteudo";
     }
 
 

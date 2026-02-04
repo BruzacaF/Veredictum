@@ -1,5 +1,6 @@
 package br.edu.ifpb.pweb2.veredictum.config;
 
+import br.edu.ifpb.pweb2.veredictum.security.CustomAuthenticationFailureHandler;
 import br.edu.ifpb.pweb2.veredictum.security.CustomAuthenticationSuccessHandler;
 import br.edu.ifpb.pweb2.veredictum.service.UsuarioDetailsService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,6 +23,9 @@ public class SecurityConfig {
     private UsuarioDetailsService usuarioDetailsService;
 
     @Autowired
+    private CustomAuthenticationFailureHandler failureHandler;
+
+    @Autowired
     private CustomAuthenticationSuccessHandler successHandler;
 
     @Bean
@@ -35,6 +39,7 @@ public class SecurityConfig {
         return authConfig.getAuthenticationManager();
     }
 
+    @Bean
     public DaoAuthenticationProvider authenticationProvider() {
         DaoAuthenticationProvider auth = new DaoAuthenticationProvider();
         auth.setUserDetailsService(usuarioDetailsService);
@@ -47,9 +52,12 @@ public class SecurityConfig {
         http
                 .authenticationProvider(authenticationProvider())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/", "/login", "/css/**", "/js/**").permitAll()
+                        .requestMatchers("/", "/login", "/css/**", "/js/**", "/images/**").permitAll()
                         .requestMatchers("/coordenador/**").hasRole("COORDENADOR")
-                        .requestMatchers("/professor/**").hasRole("PROFESSOR")
+                        .requestMatchers("/processo/adicionar", "/processo/*/arquivo").hasRole("ALUNO")
+                        .requestMatchers("/processo/*/modal").hasAnyRole("ALUNO", "PROFESSOR")
+                        .requestMatchers("/processo/*/distribuir").hasAnyRole("COORDENADOR", "PROFESSOR")
+                        .requestMatchers("/professor/**", "/home/professor/**", "/processo/**", "/reuniao/professor/**").hasRole("PROFESSOR")
                         .requestMatchers("/home/aluno/**").hasRole("ALUNO")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
@@ -57,6 +65,7 @@ public class SecurityConfig {
                 .formLogin(form -> form
                         .loginPage("/login")
                         .loginProcessingUrl("/login")
+                        .failureHandler(failureHandler)
                         .successHandler(successHandler)
                         .permitAll()
                 )
@@ -67,6 +76,9 @@ public class SecurityConfig {
                         .deleteCookies("JSESSIONID")
                         .clearAuthentication(true)
                         .permitAll()
+                )
+                .exceptionHandling(exception -> exception
+                        .accessDeniedPage("/403")
                 );
 
         return http.build();
