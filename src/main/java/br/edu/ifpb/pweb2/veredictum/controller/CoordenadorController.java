@@ -268,6 +268,56 @@ public class CoordenadorController {
         }
     }
 
+    @PostMapping("/sessao/{id}/encerrar")
+    @Transactional
+    public String encerrarSessao(
+            @PathVariable Long id,
+            @AuthenticationPrincipal UsuarioDetails usuarioDetails,
+            RedirectAttributes redirectAttributes
+    ) {
+        try {
+            Professor coordenador = obterCoordenador(usuarioDetails);
+            Reuniao sessao = reuniaoService.buscarPorId(id);
+            
+            if (sessao == null) {
+                throw new RuntimeException("Sessão não encontrada");
+            }
+            
+            // Verificar se o coordenador tem permissão para encerrar esta sessão
+            if (!sessao.getCoordenador().getId().equals(coordenador.getId())) {
+                throw new RuntimeException("Acesso negado. Apenas o coordenador responsável pode encerrar esta sessão.");
+            }
+            
+            // Não permitir encerrar sessões já encerradas
+            if (sessao.getStatus() == StatusReuniao.ENCERRADA) {
+                throw new RuntimeException("Esta sessão já está encerrada.");
+            }
+            
+            // Não permitir encerrar sessões que ainda não iniciaram
+            if (sessao.getStatus() == StatusReuniao.PROGRAMADA) {
+                throw new RuntimeException("Não é possível encerrar uma sessão que ainda não foi iniciada.");
+            }
+            
+            // Verificar se há processos em julgamento
+            long processosEmJulgamento = sessao.getPauta().stream()
+                    .filter(p -> p.getStatus() == StatusProcessoEnum.EM_JULGAMENTO)
+                    .count();
+            
+            if (processosEmJulgamento > 0) {
+                throw new RuntimeException("Não é possível encerrar a sessão. Há " + processosEmJulgamento + " processo(s) ainda em julgamento. Conclua todos os julgamentos antes de encerrar.");
+            }
+            
+            reuniaoService.encerrarSessao(id);
+            
+            redirectAttributes.addFlashAttribute("success", "✅ Sessão encerrada com sucesso! Nenhuma alteração nos processos pode mais ser realizada.");
+            return "redirect:/coordenador/sessao/" + id;
+            
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", "❌ Erro ao encerrar sessão: " + e.getMessage());
+            return "redirect:/coordenador/sessao/" + id;
+        }
+    }
+
     @PostMapping("/sessao/{reuniaoId}/processo/{processoId}/remover")
     @Transactional
     public String removerProcessoDaPauta(
@@ -310,6 +360,10 @@ public class CoordenadorController {
                 throw new RuntimeException("Acesso negado.");
             }
             
+            if (sessao.getStatus() == StatusReuniao.ENCERRADA) {
+                throw new RuntimeException("Não é possível iniciar julgamento. A sessão já foi encerrada.");
+            }
+            
             reuniaoService.iniciarJulgamentoProcesso(reuniaoId, processoId);
             return "redirect:/coordenador/sessao/" + reuniaoId + "/processo/" + processoId + "/julgamento";
             
@@ -331,7 +385,12 @@ public class CoordenadorController {
             Reuniao sessao = reuniaoRepository.findById(sessaoId)
                     .orElseThrow(() -> new RuntimeException("Sessão não encontrada"));
             
-            // Validar que é o coordenador da sessão
+
+            // Validar que a sessão não está encerrada
+            if (sessao.getStatus() == StatusReuniao.ENCERRADA) {
+                redirectAttributes.addFlashAttribute("error", "Não é possível concluir julgamento. A sessão já foi encerrada.");
+                return "redirect:/coordenador/sessao/" + sessaoId + "/processo/" + processoId + "/julgamento";
+            }//Validar que é o coordenador da sessão
             if (!sessao.getCoordenador().getId().equals(coordenador.getId())) {
                 redirectAttributes.addFlashAttribute("error", "Apenas o coordenador pode concluir julgamentos");
                 return "redirect:/coordenador/sessao/" + sessaoId;
@@ -417,6 +476,11 @@ public class CoordenadorController {
             
             if (!sessao.getCoordenador().getId().equals(coordenador.getId())) {
                 redirectAttributes.addFlashAttribute("error", "Apenas o coordenador pode exercer o voto de minerva");
+                return "redirect:/coordenador/sessao/" + sessaoId + "/processo/" + processoId + "/julgamento";
+            }
+            
+            if (sessao.getStatus() == StatusReuniao.ENCERRADA) {
+                redirectAttributes.addFlashAttribute("error", "Não é possível votar. A sessão já foi encerrada.");
                 return "redirect:/coordenador/sessao/" + sessaoId + "/processo/" + processoId + "/julgamento";
             }
             

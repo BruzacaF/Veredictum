@@ -110,10 +110,15 @@
                         </a>
                     </div>
                     <button class="btn btn-sm btn-danger w-100 mt-3"
-                            disabled
-                            th:if="${ehCoordenador}">
+                            onclick="encerrarReuniao()"
+                            th:if="${ehCoordenador && sessao.status.name() == 'EM_ANDAMENTO'}"
+                            type="button">
                         <i class="bi bi-x-circle"></i> Encerrar reunião
                     </button>
+                    <div class="alert alert-warning mt-3 mb-0" 
+                         th:if="${ehCoordenador && sessao.status.name() == 'ENCERRADA'}">
+                        <i class="bi bi-lock-fill"></i> <strong>Reunião Encerrada</strong>
+                    </div>
                 </div>
             </div>
         </div>
@@ -273,7 +278,7 @@
                     </div>
                     
                     <!-- Botão de Concluir Julgamento - Apenas para Coordenador -->
-                    <div class="mt-4" th:if="${ehCoordenador && processo.status.name() == 'EM_JULGAMENTO'}">
+                    <div class="mt-4" th:if="${ehCoordenador && processo.status.name() == 'EM_JULGAMENTO' && sessao.status.name() != 'ENCERRADA'}">
                         <div class="alert alert-info">
                             <i class="bi bi-info-circle"></i>
                             <strong>Atenção:</strong> Ao concluir o julgamento, o resultado será calculado automaticamente. 
@@ -285,7 +290,7 @@
                     </div>
                     
                     <!-- Voto de Minerva em caso de Empate -->
-                    <div class="mt-4" th:if="${ehCoordenador && empate != null && empate == true && processo.status.name() == 'EM_JULGAMENTO'}">
+                    <div class="mt-4" th:if="${ehCoordenador && empate != null && empate == true && processo.status.name() == 'EM_JULGAMENTO' && sessao.status.name() != 'ENCERRADA'}">
                         <div class="alert alert-warning border-3 shadow">
                             <h5 class="alert-heading">
                                 <i class="bi bi-scales"></i> Empate Detectado - Voto de Minerva Necessário
@@ -398,6 +403,24 @@
                             decisaoInput.name = 'decisao';
                             decisaoInput.value = decisao;
                             form.appendChild(decisaoInput);
+                            
+                            document.body.appendChild(form);
+                            form.submit();
+                        }
+                    }
+                    
+                    function encerrarReuniao() {
+                        if (confirm('⚠️ ATENÇÃO: Deseja realmente encerrar esta reunião?\n\nApós o encerramento:\n• Nenhum voto poderá ser registrado\n• Nenhum processo poderá ser julgado\n• Nenhuma alteração poderá ser feita\n\nEsta ação é IRREVERSÍVEL!')) {
+                            const form = document.createElement('form');
+                            form.method = 'POST';
+                            form.action = `/coordenador/sessao/${sessaoId}/encerrar`;
+                            
+                            const csrfToken = /*[[${_csrf.token}]]*/ '';
+                            const csrfInput = document.createElement('input');
+                            csrfInput.type = 'hidden';
+                            csrfInput.name = '_csrf';
+                            csrfInput.value = csrfToken;
+                            form.appendChild(csrfInput);
                             
                             document.body.appendChild(form);
                             form.submit();

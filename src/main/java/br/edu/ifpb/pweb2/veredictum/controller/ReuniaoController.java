@@ -239,6 +239,12 @@ class ReuniaoController {
             Professor professor = (Professor) usuario.getUsuario();
             boolean ehCoordenador = usuario.getUsuario().getRole() == RoleEnum.COORDENADOR;
             
+            // Verificar se a sessão está encerrada
+            Reuniao sessao = reuniaoService.buscarPorId(reuniaoId);
+            if (sessao.getStatus() == StatusReuniao.ENCERRADA) {
+                throw new RuntimeException("Não é possível votar. A sessão já foi encerrada.");
+            }
+            
             // Delegar a lógica de negócio para o service
             reuniaoService.registrarVoto(reuniaoId, processoId, professor, decisao, ehCoordenador);
             
