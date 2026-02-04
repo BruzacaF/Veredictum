@@ -7,10 +7,12 @@ import br.edu.ifpb.pweb2.veredictum.model.Aluno;
 import br.edu.ifpb.pweb2.veredictum.model.Processo;
 import br.edu.ifpb.pweb2.veredictum.model.Professor;
 import br.edu.ifpb.pweb2.veredictum.model.Usuario;
+import br.edu.ifpb.pweb2.veredictum.model.Voto;
 import br.edu.ifpb.pweb2.veredictum.repository.AssuntoRepository;
 import br.edu.ifpb.pweb2.veredictum.repository.ProcessoRepository;
 import br.edu.ifpb.pweb2.veredictum.security.UsuarioDetails;
 import br.edu.ifpb.pweb2.veredictum.service.ProcessoService;
+import br.edu.ifpb.pweb2.veredictum.service.VotoService;
 import jakarta.validation.Valid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -18,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.stereotype.Controller;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.*;
@@ -34,6 +37,8 @@ public class ProcessoController {
     private ProcessoRepository processoRepository;
     @Autowired
     private AssuntoRepository assuntoRepository;
+    @Autowired
+    private VotoService votoService;
 
     @PostMapping("/adicionar")
     public String adicionarProcesso(@Valid @ModelAttribute ProcessoDTO processo,
@@ -119,6 +124,7 @@ public class ProcessoController {
 
 
     @GetMapping("/{id}/modal")
+    @Transactional(readOnly = true)
     public String detalhesModal(@PathVariable Long id, Model model, @AuthenticationPrincipal UsuarioDetails usuario) {
 
         Processo processo = processoService.buscarPorId(id);
@@ -126,18 +132,36 @@ public class ProcessoController {
         int totalDocumentos = processo.getDocumentos().size();
         int limite = 3;
 
-        boolean isAluno = usuario.getAuthorities()
-                .stream()
+        boolean isAluno = usuario.getAuthorities().stream()
                 .anyMatch(a -> a.getAuthority().equals("ROLE_ALUNO"));
 
+        boolean isProfessor = usuario.getAuthorities()
+                .stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_PROFESSOR"));
 
         boolean podeEnviarDocumento =
                 isAluno &&
                 processo.getStatus() == StatusProcessoEnum.CRIADO &&
                         totalDocumentos < limite;
+        
+        // Verificar se o professor já votou
+        boolean jaVotou = false;
+        Voto votoExistente = null;
+        if (isProfessor) {
+            Professor professor = (Professor) usuario.getUsuario();
+            jaVotou = votoService.professorJaVotou(processo.getId(), professor.getId());
+            if (jaVotou) {
+                votoExistente = votoService.buscarVotoDoProfessor(professor, processo).orElse(null);
+            }
+        }
 
         model.addAttribute("processo", processo);
         model.addAttribute("totalDocumentos", totalDocumentos);
+        model.addAttribute("limiteDocumentos", limite);
+        model.addAttribute("podeEnviarDocumento", podeEnviarDocumento);
+        model.addAttribute("isProfessor", isProfessor);
+        model.addAttribute("jaVotou", jaVotou);
+        model.addAttribute("votoExistente", votoExistente);
         model.addAttribute("limiteDocumentos", limite);
         model.addAttribute("podeEnviarDocumento", podeEnviarDocumento);
 

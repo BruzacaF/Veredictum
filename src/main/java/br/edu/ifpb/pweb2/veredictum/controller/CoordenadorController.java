@@ -439,6 +439,7 @@ public class CoordenadorController {
     }
 
     @GetMapping("/sessao/{sessaoId}/processo/{processoId}/julgamento")
+    @Transactional(readOnly = true)
     public String julgamentoProcesso(@PathVariable Long sessaoId,
                                      @PathVariable Long processoId,
                                      Model model,

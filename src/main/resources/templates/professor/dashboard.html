@@ -2,6 +2,8 @@
 <html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout">
 <head>
     <meta charset="UTF-8">
+    <meta name="_csrf" th:content="${_csrf.token}"/>
+    <meta name="_csrf_header" th:content="${_csrf.headerName}"/>
     <title>Dashboard do Aluno</title>
 
     <!-- Bootstrap -->
@@ -269,6 +271,46 @@
             window.location.href = `/reuniao/${id}/detalhes`;
         });
     });
+
+    // FUNÇÃO DE VOTAÇÃO
+    function registrarVoto(button, tipoDecisao) {
+        const processoId = button.dataset.processoId;
+        const justificativa = document.getElementById('justificativaVoto')?.value || '';
+        
+        // Criar formulário e submeter
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = `/home/professor/processo/${processoId}/votar`;
+        
+        // Adicionar token CSRF
+        const csrfToken = document.querySelector('meta[name="_csrf"]')?.content;
+        const csrfHeader = document.querySelector('meta[name="_csrf_header"]')?.content;
+        
+        if (csrfToken) {
+            const inputCsrf = document.createElement('input');
+            inputCsrf.type = 'hidden';
+            inputCsrf.name = '_csrf';
+            inputCsrf.value = csrfToken;
+            form.appendChild(inputCsrf);
+        }
+        
+        const inputTipo = document.createElement('input');
+        inputTipo.type = 'hidden';
+        inputTipo.name = 'tipoDecisao';
+        inputTipo.value = tipoDecisao;
+        form.appendChild(inputTipo);
+        
+        if (justificativa) {
+            const inputJust = document.createElement('input');
+            inputJust.type = 'hidden';
+            inputJust.name = 'justificativa';
+            inputJust.value = justificativa;
+            form.appendChild(inputJust);
+        }
+        
+        document.body.appendChild(form);
+        form.submit();
+    }
 </script>
 
 </body>
