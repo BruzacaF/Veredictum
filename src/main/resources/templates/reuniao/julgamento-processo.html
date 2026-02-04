@@ -220,27 +220,8 @@
                                 
                                 <!-- Coluna dos votos / botão -->
                                 <div class="col-md-8">
-                                    <!-- Botões de voto para coordenador -->
-                                    <div class="btn-group" th:if="${votoMembro.membro.id == usuario.id and podeVotar and ehCoordenador}">
-                                        <button class="btn btn-sm btn-outline-success" onclick="registrarVoto(this, 'COM_RELATOR')"
-                                                th:data-processo-id="${processo.id}"
-                                                th:data-reuniao-id="${sessao.id}"
-                                                type="button">Aprovar
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-danger" onclick="registrarVoto(this, 'DIVERGENTE')"
-                                                th:data-processo-id="${processo.id}"
-                                                th:data-reuniao-id="${sessao.id}"
-                                                type="button">Reprovar
-                                        </button>
-                                        <button class="btn btn-sm btn-outline-warning" onclick="registrarVoto(this, 'AUSENTE')"
-                                                th:data-processo-id="${processo.id}"
-                                                th:data-reuniao-id="${sessao.id}"
-                                                type="button">Abstenção
-                                        </button>
-                                    </div>
-                                    
-                                    <!-- Botões de voto para membros (não coordenadores) -->
-                                    <div class="btn-group" th:if="${votoMembro.membro.id == usuario.id and podeVotar and !ehCoordenador}">
+                                    <!-- Botões de voto para todos os membros -->
+                                    <div class="btn-group" th:if="${votoMembro.membro.id == usuario.id and podeVotar}">
                                         <button class="btn btn-sm btn-outline-success" onclick="registrarVoto(this, 'COM_RELATOR')"
                                                 th:data-processo-id="${processo.id}"
                                                 th:data-reuniao-id="${sessao.id}"
@@ -257,9 +238,8 @@
                                     
                                     <!-- Exibição dos votos já dados -->
                                     <span class="badge voto-badge"
-                                          th:classappend="${votoMembro.voto.voto?.name() == 'COM_RELATOR' ? 'bg-success' :
-                                   votoMembro.voto.voto?.name() == 'DIVERGENTE' ? 'bg-danger' :
-                                   votoMembro.voto.voto?.name() == 'AUSENTE' ? 'bg-warning text-dark' : 'bg-secondary'}"
+                                          th:classappend="${votoMembro.voto.voto?.name() == 'DEFERIMENTO' ? 'bg-success' :
+                                   votoMembro.voto.voto?.name() == 'INDEFERIMENTO' ? 'bg-danger' : 'bg-secondary'}"
                                           th:if="${votoMembro.voto != null}"
                                           th:text="${votoMembro.voto.voto?.name()}">Aguardando</span>
                                     
@@ -286,6 +266,36 @@
                         <button class="btn btn-primary btn-lg w-100" onclick="concluirJulgamento()" type="button">
                             <i class="bi bi-check-circle"></i> Concluir Julgamento e Calcular Resultado
                         </button>
+                    </div>
+                    
+                    <!-- Voto de Minerva em caso de Empate -->
+                    <div class="mt-4" th:if="${ehCoordenador && empate != null && empate == true && processo.status.name() == 'EM_JULGAMENTO'}">
+                        <div class="alert alert-warning border-3 shadow">
+                            <h5 class="alert-heading">
+                                <i class="bi bi-scales"></i> Empate Detectado - Voto de Minerva Necessário
+                            </h5>
+                            <hr>
+                            <p class="mb-3">
+                                <strong>Situação:</strong> 
+                                <span class="badge bg-success fs-6 mx-2" th:text="${votosDeferidos} + ' Deferidos'">0 Deferidos</span>
+                                <span class="badge bg-danger fs-6" th:text="${votosIndeferidos} + ' Indeferidos'">0 Indeferidos</span>
+                            </p>
+                            <p class="mb-3">
+                                Como <strong>Coordenador</strong>, você deve exercer o voto de minerva para desempatar esta votação.
+                            </p>
+                            <div class="d-flex gap-3">
+                                <button class="btn btn-success btn-lg flex-fill" 
+                                        onclick="votarMinerva('DEFERIMENTO')" 
+                                        type="button">
+                                    <i class="bi bi-check-circle-fill"></i> Voto de Minerva: DEFERIMENTO
+                                </button>
+                                <button class="btn btn-danger btn-lg flex-fill" 
+                                        onclick="votarMinerva('INDEFERIMENTO')" 
+                                        type="button">
+                                    <i class="bi bi-x-circle-fill"></i> Voto de Minerva: INDEFERIMENTO
+                                </button>
+                            </div>
+                        </div>
                     </div>
                     
                     <!-- Resultado Final Exibido -->
@@ -352,6 +362,30 @@
                     function visualizarParecer() {
                         // TODO: Implementar visualização do parecer
                         alert('Visualização de parecer será implementada');
+                    }
+                    
+                    function votarMinerva(decisao) {
+                        if (confirm(`Confirma seu voto de minerva para ${decisao}?\n\nEste voto será decisivo para o resultado final.`)) {
+                            const form = document.createElement('form');
+                            form.method = 'POST';
+                            form.action = `/coordenador/sessao/${sessaoId}/processo/${processoId}/voto-minerva`;
+                            
+                            const csrfToken = /*[[${_csrf.token}]]*/ '';
+                            const csrfInput = document.createElement('input');
+                            csrfInput.type = 'hidden';
+                            csrfInput.name = '_csrf';
+                            csrfInput.value = csrfToken;
+                            form.appendChild(csrfInput);
+                            
+                            const decisaoInput = document.createElement('input');
+                            decisaoInput.type = 'hidden';
+                            decisaoInput.name = 'decisao';
+                            decisaoInput.value = decisao;
+                            form.appendChild(decisaoInput);
+                            
+                            document.body.appendChild(form);
+                            form.submit();
+                        }
                     }
                 </script>
                 

@@ -3,7 +3,6 @@ package br.edu.ifpb.pweb2.veredictum.service;
 import br.edu.ifpb.pweb2.veredictum.enums.StatusProcessoEnum;
 import br.edu.ifpb.pweb2.veredictum.enums.StatusReuniao;
 import br.edu.ifpb.pweb2.veredictum.enums.TipoDecisao;
-import br.edu.ifpb.pweb2.veredictum.enums.TipoVoto;
 import br.edu.ifpb.pweb2.veredictum.model.*;
 import br.edu.ifpb.pweb2.veredictum.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -200,50 +199,43 @@ public class ReuniaoService {
             throw new RuntimeException("Você já votou neste processo.");
         }
 
-        TipoVoto tipoVoto = converterDecisaoParaVoto(decisao, processo, ehCoordenador);
+        TipoDecisao tipoDecisao = converterDecisaoParaVoto(decisao, processo);
 
         // Criar e salvar o voto
         Voto voto = new Voto();
         voto.setProfessor(professor);
         voto.setProcesso(processo);
-        voto.setVoto(tipoVoto);
+        voto.setVoto(tipoDecisao);
         voto.setDataVoto(LocalDateTime.now());
 
         votoRepository.save(voto);
     }
     
-    private TipoVoto converterDecisaoParaVoto(String decisao, Processo processo, boolean ehCoordenador) {
+    private TipoDecisao converterDecisaoParaVoto(String decisao, Processo processo) {
         String decisaoRecebida = decisao.toUpperCase();
 
-        // Para coordenadores: decisões diretas (DEFERIDO, INDEFERIDO, AUSENTE)
-        // Para membros: COM_RELATOR ou DIVERGENTE (baseado na decisão do relator)
+        // Aceitar tanto COM_RELATOR/DIVERGENTE quanto DEFERIMENTO/INDEFERIMENTO
         if (decisaoRecebida.equals("COM_RELATOR")) {
             // Votar igual ao relator
             if (processo.getDecisaoRelator() == null) {
                 throw new RuntimeException("Não é possível votar pois o relator ainda não decidiu.");
             }
-            // Converter TipoDecisao para TipoVoto
-            return processo.getDecisaoRelator() == TipoDecisao.DEFERIMENTO ? 
-                   TipoVoto.DEFERIDO : TipoVoto.INDEFERIDO;
+            return processo.getDecisaoRelator();
             
         } else if (decisaoRecebida.equals("DIVERGENTE")) {
             // Votar contrário ao relator
             if (processo.getDecisaoRelator() == null) {
                 throw new RuntimeException("Não é possível votar pois o relator ainda não decidiu.");
             }
-            // Inverter a decisão do relator e converter para TipoVoto
             return processo.getDecisaoRelator() == TipoDecisao.DEFERIMENTO ? 
-                   TipoVoto.INDEFERIDO : TipoVoto.DEFERIDO;
-                   
-        } else if (decisaoRecebida.equals("AUSENTE")) {
-            return TipoVoto.AUSENTE;
+                   TipoDecisao.INDEFERIMENTO : TipoDecisao.DEFERIMENTO;
             
         } else {
-            // Para decisões diretas (coordenador)
+            // Para decisões diretas
             try {
-                return TipoVoto.valueOf(decisaoRecebida);
+                return TipoDecisao.valueOf(decisaoRecebida);
             } catch (IllegalArgumentException e) {
-                throw new RuntimeException("Tipo de voto inválido: " + decisao);
+                throw new RuntimeException("Tipo de decisão inválido: " + decisao);
             }
         }
     }

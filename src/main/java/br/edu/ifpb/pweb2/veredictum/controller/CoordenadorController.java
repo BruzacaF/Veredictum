@@ -5,7 +5,6 @@ import br.edu.ifpb.pweb2.veredictum.dto.VotoMembroDTO;
 import br.edu.ifpb.pweb2.veredictum.enums.StatusProcessoEnum;
 import br.edu.ifpb.pweb2.veredictum.enums.StatusReuniao;
 import br.edu.ifpb.pweb2.veredictum.enums.TipoDecisao;
-import br.edu.ifpb.pweb2.veredictum.enums.TipoVoto;
 import br.edu.ifpb.pweb2.veredictum.model.*;
 import br.edu.ifpb.pweb2.veredictum.repository.*;
 import br.edu.ifpb.pweb2.veredictum.security.UsuarioDetails;
@@ -342,54 +341,46 @@ public class CoordenadorController {
             if (processoOpt.isPresent()) {
                 Processo processo = processoOpt.get();
 
-                // Marcar membros sem voto como AUSENTE
-                for (Usuario membro : sessao.getMembros()) {
-                    boolean jaVotou = processo.getVotos().stream()
-                            .anyMatch(v -> v.getProfessor().getId().equals(membro.getId()));
-                    if (!jaVotou) {
-                        Voto voto = new Voto();
-                        voto.setProfessor((Professor) membro);
-                        voto.setProcesso(processo);
-                        voto.setVoto(TipoVoto.AUSENTE);
-                        voto.setDataVoto(LocalDateTime.now());
-                        votoRepository.save(voto);
-                    }
-                }
-
-                // Calcular resultado final baseado nos votos
+                // Calcular resultado final baseado nos votos (apenas membros que votaram)
                 List<Voto> votos = votoRepository.findByProcessoId(processoId);
                 
                 long votosDeferidos = votos.stream()
-                        .filter(v -> v.getVoto() == TipoVoto.DEFERIDO)
+                        .filter(v -> v.getVoto() == TipoDecisao.DEFERIMENTO)
                         .count();
                 
                 long votosIndeferidos = votos.stream()
-                        .filter(v -> v.getVoto() == TipoVoto.INDEFERIDO)
+                        .filter(v -> v.getVoto() == TipoDecisao.INDEFERIMENTO)
                         .count();
 
                 // Determinar resultado final
                 TipoDecisao decisaoFinal;
                 if (votosDeferidos > votosIndeferidos) {
                     decisaoFinal = TipoDecisao.DEFERIMENTO;
+                    
+                    // Atualizar processo com decisão final
+                    processo.setDecisaoFinal(decisaoFinal);
+                    processo.setStatus(StatusProcessoEnum.JULGADO);
+                    processoRepository.save(processo);
+                    
+                    redirectAttributes.addFlashAttribute("success", "✅ Julgamento concluído! Resultado: " + decisaoFinal.name());
+                    
                 } else if (votosIndeferidos > votosDeferidos) {
                     decisaoFinal = TipoDecisao.INDEFERIMENTO;
-                } else {
-                    // Empate: voto de minerva do coordenador
-                    Voto votoCoordenador = votos.stream()
-                            .filter(v -> v.getProfessor().getId().equals(coordenador.getId()))
-                            .findFirst()
-                            .orElseThrow(() -> new RuntimeException("Voto do coordenador não encontrado"));
                     
-                    decisaoFinal = votoCoordenador.getVoto() == TipoVoto.DEFERIDO ? 
-                                  TipoDecisao.DEFERIMENTO : TipoDecisao.INDEFERIMENTO;
+                    // Atualizar processo com decisão final
+                    processo.setDecisaoFinal(decisaoFinal);
+                    processo.setStatus(StatusProcessoEnum.JULGADO);
+                    processoRepository.save(processo);
+                    
+                    redirectAttributes.addFlashAttribute("success", "✅ Julgamento concluído! Resultado: " + decisaoFinal.name());
+                    
+                } else {
+                    // Empate: coordenador precisa desempatar
+                    redirectAttributes.addFlashAttribute("error", "⚖️ Empate detectado! Como coordenador, você deve exercer o voto de minerva para desempatar.");
+                    redirectAttributes.addFlashAttribute("empate", true);
+                    redirectAttributes.addFlashAttribute("votosDeferidos", votosDeferidos);
+                    redirectAttributes.addFlashAttribute("votosIndeferidos", votosIndeferidos);
                 }
-
-                // Atualizar processo com decisão final
-                processo.setDecisaoFinal(decisaoFinal);
-                processo.setStatus(StatusProcessoEnum.JULGADO);
-                processoRepository.save(processo);
-
-                redirectAttributes.addFlashAttribute("success", "✅ Julgamento concluído! Resultado: " + decisaoFinal.name());
             } else {
                 redirectAttributes.addFlashAttribute("error", "Processo não encontrado.");
             }
@@ -402,6 +393,50 @@ public class CoordenadorController {
         return "redirect:/coordenador/sessao/" + sessaoId + "/processo/" + processoId + "/julgamento";
     }
 
+
+    @PostMapping("/sessao/{sessaoId}/processo/{processoId}/voto-minerva")
+    @Transactional
+    public String votoDeMinerva(@PathVariable Long sessaoId,
+                                @PathVariable Long processoId,
+                                @RequestParam String decisao,
+                                @AuthenticationPrincipal UsuarioDetails usuarioDetails,
+                                RedirectAttributes redirectAttributes) {
+        try {
+            Professor coordenador = obterCoordenador(usuarioDetails);
+            Reuniao sessao = reuniaoRepository.findById(sessaoId)
+                    .orElseThrow(() -> new RuntimeException("Sessão não encontrada"));
+            
+            if (!sessao.getCoordenador().getId().equals(coordenador.getId())) {
+                redirectAttributes.addFlashAttribute("error", "Apenas o coordenador pode exercer o voto de minerva");
+                return "redirect:/coordenador/sessao/" + sessaoId + "/processo/" + processoId + "/julgamento";
+            }
+            
+            Processo processo = processoRepository.findById(processoId)
+                    .orElseThrow(() -> new RuntimeException("Processo não encontrado"));
+            
+            // Validar que a decisão é válida
+            TipoDecisao decisaoFinal;
+            try {
+                decisaoFinal = TipoDecisao.valueOf(decisao);
+            } catch (IllegalArgumentException e) {
+                redirectAttributes.addFlashAttribute("error", "Decisão inválida");
+                return "redirect:/coordenador/sessao/" + sessaoId + "/processo/" + processoId + "/julgamento";
+            }
+            
+            // Atualizar processo com decisão final do voto de minerva
+            processo.setDecisaoFinal(decisaoFinal);
+            processo.setStatus(StatusProcessoEnum.JULGADO);
+            processoRepository.save(processo);
+            
+            redirectAttributes.addFlashAttribute("success", 
+                "✅ Julgamento concluído com voto de minerva! Resultado: " + decisaoFinal.name());
+            
+        } catch (RuntimeException e) {
+            redirectAttributes.addFlashAttribute("error", "❌ Erro: " + e.getMessage());
+        }
+        
+        return "redirect:/coordenador/sessao/" + sessaoId + "/processo/" + processoId + "/julgamento";
+    }
 
     @GetMapping("/sessao/{sessaoId}/processo/{processoId}/julgamento")
     public String julgamentoProcesso(@PathVariable Long sessaoId,
@@ -432,6 +467,20 @@ public class CoordenadorController {
 
         // Flag para saber se é coordenador
         boolean ehCoordenador = usuario.getUsuario().getId().equals(sessao.getCoordenador().getId());
+        
+        // Verificar se há empate nos votos
+        if (processo.getStatus() == StatusProcessoEnum.EM_JULGAMENTO) {
+            List<Voto> votos = votoRepository.findByProcessoId(processoId);
+            long votosDeferidos = votos.stream()
+                    .filter(v -> v.getVoto() == TipoDecisao.DEFERIMENTO)
+                    .count();
+            long votosIndeferidos = votos.stream()
+                    .filter(v -> v.getVoto() == TipoDecisao.INDEFERIMENTO)
+                    .count();
+            
+            model.addAttribute("votosDeferidos", votosDeferidos);
+            model.addAttribute("votosIndeferidos", votosIndeferidos);
+        }
 
         model.addAttribute("sessao", sessao);
         model.addAttribute("processo", processo);
