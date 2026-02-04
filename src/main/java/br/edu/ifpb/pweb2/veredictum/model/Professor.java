@@ -1,6 +1,8 @@
 package br.edu.ifpb.pweb2.veredictum.model;
 
+import br.edu.ifpb.pweb2.veredictum.validation.MatriculaValida;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotBlank;
 import lombok.*;
 
 import java.util.ArrayList;
@@ -18,6 +20,8 @@ import java.util.Set;
 public class Professor extends Usuario {
     
     @EqualsAndHashCode.Include
+    @NotBlank(message = "A matrícula é obrigatória")
+    @MatriculaValida(message = "Matrícula inválida. Use o formato YYYYNNNN (ex: 20241001)")
     private String matricula;
     
     private boolean ehCoordenador;

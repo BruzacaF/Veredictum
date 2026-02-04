@@ -106,7 +106,7 @@ public class DataInitializer {
             coordenador.setSenha(encoder.encode("coordenador123"));
             coordenador.setRole(RoleEnum.COORDENADOR);
             coordenador.setTelefone("83977777777");
-            coordenador.setMatricula("SIAPE001");
+            coordenador.setMatricula("20150001");
             coordenador.setEhCoordenador(true);
             coordenador.getColegiados().add(colegiado);
 
@@ -116,7 +116,7 @@ public class DataInitializer {
             professor.setSenha(encoder.encode("professor123"));
             professor.setRole(RoleEnum.PROFESSOR);
             professor.setTelefone("83966666666");
-            professor.setMatricula("SIAPE002");
+            professor.setMatricula("20160002");
             professor.setEhCoordenador(false);
             professor.getColegiados().add(colegiado);
 
@@ -126,7 +126,7 @@ public class DataInitializer {
             professor2.setSenha(encoder.encode("professor123"));
             professor2.setRole(RoleEnum.PROFESSOR);
             professor2.setTelefone("83965555555");
-            professor2.setMatricula("SIAPE003");
+            professor2.setMatricula("20170003");
             professor2.setEhCoordenador(false);
             professor2.getColegiados().add(colegiado);
 
@@ -136,7 +136,7 @@ public class DataInitializer {
             professor3.setSenha(encoder.encode("professor123"));
             professor3.setRole(RoleEnum.PROFESSOR);
             professor3.setTelefone("83964444444");
-            professor3.setMatricula("SIAPE004");
+            professor3.setMatricula("20180004");
             professor3.setEhCoordenador(false);
             professor3.getColegiados().add(colegiado);
             professor3.getColegiados().add(colegiado2);
@@ -147,7 +147,7 @@ public class DataInitializer {
             coordenador2.setSenha(encoder.encode("coordenador123"));
             coordenador2.setRole(RoleEnum.COORDENADOR);
             coordenador2.setTelefone("83963333333");
-            coordenador2.setMatricula("SIAPE005");
+            coordenador2.setMatricula("20190005");
             coordenador2.setEhCoordenador(true);
             coordenador2.getColegiados().add(colegiado2);
 
@@ -157,7 +157,7 @@ public class DataInitializer {
             professor4.setSenha(encoder.encode("professor123"));
             professor4.setRole(RoleEnum.PROFESSOR);
             professor4.setTelefone("83962222222");
-            professor4.setMatricula("SIAPE006");
+            professor4.setMatricula("20200006");
             professor4.setEhCoordenador(false);
             professor4.getColegiados().add(colegiado2);
 
@@ -431,19 +431,19 @@ public class DataInitializer {
             
             System.out.println("👔 COORDENADORES:");
             System.out.println("   ├─ coordenador@ifpb.edu.br / coordenador123");
-            System.out.println("   │  └─ Prof. Coordenador SI (SIAPE: SIAPE001) - Colegiado de SI");
+            System.out.println("   │  └─ Prof. Coordenador SI (Mat: 20150001) - Colegiado de SI");
             System.out.println("   └─ roberto.lima@ifpb.edu.br / coordenador123");
-            System.out.println("      └─ Prof. Roberto Lima (SIAPE: SIAPE005) - Colegiado de ADS\n");
+            System.out.println("      └─ Prof. Roberto Lima (Mat: 20190005) - Colegiado de ADS\n");
             
             System.out.println("👨‍🏫 PROFESSORES:");
             System.out.println("   ├─ professor@ifpb.edu.br / professor123");
-            System.out.println("   │  └─ Prof. João Membro (SIAPE: SIAPE002) - Colegiado de SI");
+            System.out.println("   │  └─ Prof. João Membro (Mat: 20160002) - Colegiado de SI");
             System.out.println("   ├─ ana.costa@ifpb.edu.br / professor123");
-            System.out.println("   │  └─ Prof. Ana Costa (SIAPE: SIAPE003) - Colegiado de SI");
+            System.out.println("   │  └─ Prof. Ana Costa (Mat: 20170003) - Colegiado de SI");
             System.out.println("   ├─ carlos.mendes@ifpb.edu.br / professor123");
-            System.out.println("   │  └─ Prof. Carlos Mendes (SIAPE: SIAPE004) - Colegiados de SI e ADS");
+            System.out.println("   │  └─ Prof. Carlos Mendes (Mat: 20180004) - Colegiados de SI e ADS");
             System.out.println("   └─ paula.oliveira@ifpb.edu.br / professor123");
-            System.out.println("      └─ Prof. Paula Oliveira (SIAPE: SIAPE006) - Colegiado de ADS\n");
+            System.out.println("      └─ Prof. Paula Oliveira (Mat: 20200006) - Colegiado de ADS\n");
             
             System.out.println("=".repeat(80));
             System.out.println("\n✨ Sistema pronto para uso!\n");
