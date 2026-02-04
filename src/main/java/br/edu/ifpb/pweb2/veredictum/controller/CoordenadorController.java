@@ -341,7 +341,7 @@ public class CoordenadorController {
             if (processoOpt.isPresent()) {
                 Processo processo = processoOpt.get();
 
-                // Calcular resultado final baseado nos votos (apenas membros que votaram)
+                // Calcular resultado final baseado nos votos (membros que votaram + decisão do relator)
                 List<Voto> votos = votoRepository.findByProcessoId(processoId);
                 
                 long votosDeferidos = votos.stream()
@@ -351,6 +351,15 @@ public class CoordenadorController {
                 long votosIndeferidos = votos.stream()
                         .filter(v -> v.getVoto() == TipoDecisao.INDEFERIMENTO)
                         .count();
+                
+                // Adicionar decisão do relator à contagem
+                if (processo.getDecisaoRelator() != null) {
+                    if (processo.getDecisaoRelator() == TipoDecisao.DEFERIMENTO) {
+                        votosDeferidos++;
+                    } else if (processo.getDecisaoRelator() == TipoDecisao.INDEFERIMENTO) {
+                        votosIndeferidos++;
+                    }
+                }
 
                 // Determinar resultado final
                 TipoDecisao decisaoFinal;
@@ -461,7 +470,11 @@ public class CoordenadorController {
                 })
                 .toList();
 
-        model.addAttribute("podeVotar", votosMembros.stream()
+        // Relator não pode votar
+        boolean ehRelator = processo.getRelator() != null && 
+                           processo.getRelator().getId().equals(usuario.getUsuario().getId());
+        
+        model.addAttribute("podeVotar", !ehRelator && votosMembros.stream()
                 .anyMatch(v -> v.getMembro().getId().equals(usuario.getUsuario().getId()) && v.getVoto() == null
                         && processo.getStatus() == StatusProcessoEnum.EM_JULGAMENTO));
 

@@ -376,6 +376,7 @@ public class DataInitializer {
             r1.setData(LocalDateTime.now().plusDays(3));
             r1.setStatus(StatusReuniao.PROGRAMADA);
             r1.setCoordenador(coordenador);
+            r1.getMembros().add(professor);  // Relator dos processos p1 e p2
             r1.getMembros().add(professor2);
             r1.getPauta().add(p1);
             r1.getPauta().add(p2);
@@ -385,6 +386,7 @@ public class DataInitializer {
             r2.setData(LocalDateTime.now().minusHours(1));
             r2.setStatus(StatusReuniao.PROGRAMADA);
             r2.setCoordenador(coordenador);
+            r2.getMembros().add(professor);  // Relator do processo p3
             r2.getMembros().add(professor3);
             r2.getPauta().add(p3);
 
@@ -393,6 +395,7 @@ public class DataInitializer {
             r4.setData(LocalDateTime.now().plusDays(5));
             r4.setStatus(StatusReuniao.PROGRAMADA);
             r4.setCoordenador(coordenador2);
+            r4.getMembros().add(professor);  // Relator dos processos p8 e p9
             r4.getMembros().add(professor4);
             r4.getMembros().add(professor3);
             r4.getPauta().add(p8);

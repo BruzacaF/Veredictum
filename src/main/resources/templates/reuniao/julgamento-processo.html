@@ -213,6 +213,11 @@
                 <i class="bi bi-star-fill"></i> Coordenador
             </span>
                                     
+                                    <span class="badge bg-warning text-dark ms-2" 
+                                          th:if="${processo.relator != null && votoMembro.membro.id == processo.relator.id}">
+                <i class="bi bi-file-earmark-person"></i> Relator
+            </span>
+                                    
                                     <span class="badge bg-info ms-2" th:if="${votoMembro.membro.id == usuario.id}">
                 <i class="bi bi-person-check"></i> Você
             </span>
@@ -220,8 +225,18 @@
                                 
                                 <!-- Coluna dos votos / botão -->
                                 <div class="col-md-8">
-                                    <!-- Botões de voto para todos os membros -->
-                                    <div class="btn-group" th:if="${votoMembro.membro.id == usuario.id and podeVotar}">
+                                    <!-- Relator: mostrar sua decisão -->
+                                    <div th:if="${processo.relator != null && votoMembro.membro.id == processo.relator.id}">
+                                        <span class="badge voto-badge"
+                                              th:classappend="${processo.decisaoRelator?.name() == 'DEFERIMENTO' ? 'bg-success' :
+                                                               processo.decisaoRelator?.name() == 'INDEFERIMENTO' ? 'bg-danger' : 'bg-secondary'}"
+                                              th:text="${processo.decisaoRelator != null ? processo.decisaoRelator.name() + ' (Parecer)' : 'Sem parecer'}">
+                                            DEFERIMENTO (Parecer)
+                                        </span>
+                                    </div>
+                                    
+                                    <!-- Botões de voto para membros não-relatores -->
+                                    <div class="btn-group" th:if="${votoMembro.membro.id == usuario.id and podeVotar and (processo.relator == null || votoMembro.membro.id != processo.relator.id)}">
                                         <button class="btn btn-sm btn-outline-success" onclick="registrarVoto(this, 'COM_RELATOR')"
                                                 th:data-processo-id="${processo.id}"
                                                 th:data-reuniao-id="${sessao.id}"
@@ -236,14 +251,15 @@
                                         </button>
                                     </div>
                                     
-                                    <!-- Exibição dos votos já dados -->
+                                    <!-- Exibição dos votos já dados (apenas para não-relatores) -->
                                     <span class="badge voto-badge"
                                           th:classappend="${votoMembro.voto.voto?.name() == 'DEFERIMENTO' ? 'bg-success' :
                                    votoMembro.voto.voto?.name() == 'INDEFERIMENTO' ? 'bg-danger' : 'bg-secondary'}"
-                                          th:if="${votoMembro.voto != null}"
+                                          th:if="${votoMembro.voto != null and (processo.relator == null || votoMembro.membro.id != processo.relator.id)}"
                                           th:text="${votoMembro.voto.voto?.name()}">Aguardando</span>
                                     
-                                    <span class="badge voto-badge bg-secondary" th:unless="${votoMembro.voto != null}">Aguardando voto</span>
+                                    <span class="badge voto-badge bg-secondary" 
+                                          th:unless="${votoMembro.voto != null or (processo.relator != null && votoMembro.membro.id == processo.relator.id)}">Aguardando voto</span>
                                     
                                     <small class="text-muted ms-3"
                                            th:if="${votoMembro.voto != null and votoMembro.voto.dataVoto != null}"
