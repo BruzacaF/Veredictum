@@ -57,7 +57,7 @@ public class SecurityConfig {
                         .requestMatchers("/processo/adicionar", "/processo/*/arquivo").hasRole("ALUNO")
                         .requestMatchers("/processo/*/modal").hasAnyRole("ALUNO", "PROFESSOR")
                         .requestMatchers("/processo/*/distribuir").hasAnyRole("COORDENADOR", "PROFESSOR")
-                        .requestMatchers("/professor/**", "/home/professor/**", "/processo/**", "/reuniao/professor/**").hasRole("PROFESSOR")
+                        .requestMatchers("/professor/**", "/home/professor/**", "/processo/**", "/reuniao/professor/**").hasAnyRole("PROFESSOR", "ALUNO")
                         .requestMatchers("/home/aluno/**").hasRole("ALUNO")
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .anyRequest().authenticated()
