@@ -23,6 +23,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 
 @Service
@@ -162,10 +163,15 @@ public class ProcessoService {
 
     @Transactional(readOnly = true)
     public List<Processo> listarProcessosDisponiveisParaPauta(Long colegiadoId) {
-        return processoRepository.findByColegiadoIdAndStatusIn(
+        List<Processo> processos = processoRepository.findByColegiadoIdAndStatusIn(
                 colegiadoId,
                 List.of(StatusProcessoEnum.DISTRIBUIDO, StatusProcessoEnum.COM_PARECER)
         );
+        
+        // Filtrar apenas processos que têm decisão do relator
+        return processos.stream()
+                .filter(p -> p.getDecisaoRelator() != null)
+                .collect(Collectors.toList());
     }
     public Page<Processo> buscarPorRelatorPaginado(Professor professor, Pageable pageable) {
         ProcessoDTOFiltro filtro = new ProcessoDTOFiltro();
